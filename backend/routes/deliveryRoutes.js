@@ -10,6 +10,9 @@ import {
   startDelivery,
   updateDeliveryLocation,
   completeDelivery,
+  trackDelivery,
+  getCustomerDeliveryHistory,
+  getAdminDeliveryById,
 } from "../controllers/deliveryController.js";
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -31,12 +34,7 @@ router.get("/customer", protect, authorize("customer"), getCustomerDeliveries);
 // ========================================
 router.get("/admin", protect, authorize("admin"), getAllDeliveries);
 
-// ========================================
-// Customer / Driver - Get Delivery
-// ========================================
-router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
 
-// ========================================
 // Admin - Assign Driver
 // ========================================
 router.put("/:id/assign", protect, authorize("admin"), assignDriver);
@@ -65,5 +63,31 @@ router.put(  "/:id/location",  protect,  authorize("driver"),  updateDeliveryLoc
 
 router.put(  "/:id/complete",  protect,  authorize("driver"),  completeDelivery);
 
+
+
+// ========================================
+// Customer - Delivery History
+// ========================================
+
+router.get("/history", protect, authorize("customer"), getCustomerDeliveryHistory);
+
+
+// ========================================
+// Customer - Track Delivery
+// ========================================
+
+router.get("/:id/track", protect, authorize("customer"), trackDelivery);
+
+
+// ========================================
+// Customer / Driver - Get Delivery
+// ========================================
+router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
+
+// ========================================
+// Admin - Get Delivery By ID
+// ========================================
+
+router.get("/admin/:id", protect, authorize("admin"), getAdminDeliveryById);
 
 export default router;

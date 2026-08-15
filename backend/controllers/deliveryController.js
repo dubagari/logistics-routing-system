@@ -288,13 +288,46 @@ export const getDeliveryById = async (req, res) => {
 // ========================================
 // Admin - Get All Deliveries
 // ========================================
-export const getAllDeliveries = async (
-  req,
-  res
-) => {
+export const getAllDeliveries = async (  req,  res) => {
   try {
+    // ----------------------------------------
+    // Get Status Filter
+    // ----------------------------------------
+
+    const { status } = req.query;
+
+    // ----------------------------------------
+    // Build Query
+    // ----------------------------------------
+
+    const query = {};
+
+    if (status) {
+      const allowedStatuses = [
+        "pending",
+        "assigned",
+        "accepted",
+        "in_transit",
+        "delivered",
+        "cancelled",
+      ];
+
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid delivery status",
+        });
+      }
+
+      query.status = status;
+    }
+
+    // ----------------------------------------
+    // Find Deliveries
+    // ----------------------------------------
+
     const deliveries =
-      await Delivery.find()
+      await Delivery.find(query)
         .populate(
           "customer",
           "-password"
@@ -306,6 +339,10 @@ export const getAllDeliveries = async (
         .sort({
           createdAt: -1,
         });
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
 
     return res.json({
       success: true,
@@ -875,6 +912,183 @@ export const completeDelivery = async (
   } catch (error) {
     console.error(
       "Complete delivery error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ========================================
+// Customer - Track Delivery
+// ========================================
+
+export const trackDelivery = async (req,res) => {
+  try {
+    // ----------------------------------------
+    // Find Delivery
+    // ----------------------------------------
+
+    const delivery = await Delivery.findById(req.params.id)
+    .populate("customer", "-password")
+    .populate("driver", "-password");
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+    // ----------------------------------------
+    // Verify Customer Ownership
+    // ----------------------------------------
+
+    if (delivery.customer._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message:"You do not have permission to track this delivery",
+      });
+    }
+
+    // ----------------------------------------
+    // Return Tracking Information
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+      tracking: {
+        deliveryId: delivery._id,
+
+        status: delivery.status,
+
+        driver: delivery.driver
+          ? {
+              _id: delivery.driver._id,
+              name: delivery.driver.name,
+              phone: delivery.driver.phone,
+            }
+          : null,
+
+        pickupLocation:
+          delivery.pickupLocation,
+
+        deliveryLocation:
+          delivery.deliveryLocation,
+
+        currentLocation:
+          delivery.currentLocation,
+
+        distance: delivery.distance,
+
+        estimatedTime:
+          delivery.estimatedTime,
+
+        assignedAt:
+          delivery.assignedAt,
+
+        acceptedAt:
+          delivery.acceptedAt,
+
+        startedAt:
+          delivery.startedAt,
+
+        deliveredAt:
+          delivery.deliveredAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Track delivery error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ========================================
+// Customer - Delivery History
+// ========================================
+
+export const getCustomerDeliveryHistory = async (req,res) => {
+  try {
+    // ----------------------------------------
+    // Find Customer Deliveries
+    // ----------------------------------------
+
+    const deliveries =
+      await Delivery.find({
+        customer: req.user._id,
+      })
+        .populate(
+          "driver",
+          "-password"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+    return res.json({
+      success: true,
+      count: deliveries.length,
+      deliveries,
+    });
+  } catch (error) {
+    console.error(
+      "Get customer delivery history error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ========================================
+// Admin - Get Delivery By ID
+// ========================================
+
+export const getAdminDeliveryById = async (req, res) => {
+  try {
+    // ----------------------------------------
+    // Find Delivery
+    // ----------------------------------------
+
+    const delivery = await Delivery.findById(req.params.id)
+    .populate("customer", "-password")
+    .populate("driver", "-password");
+
+    // ----------------------------------------
+    // Delivery Not Found
+    // ----------------------------------------
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+    // ----------------------------------------
+    // Return Delivery
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+      delivery,
+    });
+  } catch (error) {
+    console.error(
+      "Get admin delivery error:",
       error
     );
 
