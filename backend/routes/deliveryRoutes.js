@@ -1,0 +1,69 @@
+import express from "express";
+
+import {
+  createDelivery,
+  getCustomerDeliveries,
+  getDeliveryById,
+  getAllDeliveries,
+  assignDriver,
+  acceptDelivery,
+  startDelivery,
+  updateDeliveryLocation,
+  completeDelivery,
+} from "../controllers/deliveryController.js";
+
+import { protect, authorize } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+// ========================================
+// Customer - Create Delivery
+// ========================================
+router.post("/", protect, authorize("customer"), createDelivery);
+
+// ========================================
+// Customer - Get Own Deliveries
+// ========================================
+router.get("/customer", protect, authorize("customer"), getCustomerDeliveries);
+
+// ========================================
+// Admin - Get All Deliveries
+// ========================================
+router.get("/admin", protect, authorize("admin"), getAllDeliveries);
+
+// ========================================
+// Customer / Driver - Get Delivery
+// ========================================
+router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
+
+// ========================================
+// Admin - Assign Driver
+// ========================================
+router.put("/:id/assign", protect, authorize("admin"), assignDriver);
+
+// ========================================
+// Driver - Accept Delivery
+// ========================================
+
+router.put("/:id/accept", protect, authorize("driver"), acceptDelivery);
+
+// ========================================
+// Driver - Start Delivery
+// ========================================
+
+router.put(  "/:id/start",  protect,  authorize("driver"),  startDelivery);
+
+// ========================================
+// Driver - Update Delivery Location
+// ========================================
+
+router.put(  "/:id/location",  protect,  authorize("driver"),  updateDeliveryLocation);
+
+// ========================================
+// Driver - Complete Delivery
+// ========================================
+
+router.put(  "/:id/complete",  protect,  authorize("driver"),  completeDelivery);
+
+
+export default router;

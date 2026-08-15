@@ -1,44 +1,44 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
-const CustomerOrders = () => {
+const AdminDeliveries = () => {
   const router = useRouter();
 
   // Temporary data.
-  // This will come from the backend later.
-  const orders = [
+  // Later this will come from the backend.
+  const deliveries = [
     {
       id: "1",
       orderNumber: "ORD-001",
+      customerName: "Abubakar Ali",
+      driverName: "Ahmed Musa",
       pickupLocation: "Warehouse, Abuja",
       deliveryLocation: "Garki, Abuja",
       status: "in_transit",
-      driverName: "Ahmed Musa",
       distance: 12.5,
       estimatedTime: 25,
-      amount: 15000,
     },
     {
       id: "2",
       orderNumber: "ORD-002",
+      customerName: "Musa Ibrahim",
+      driverName: "Musa Ibrahim",
       pickupLocation: "Wuse, Abuja",
       deliveryLocation: "Maitama, Abuja",
       status: "delivered",
-      driverName: "Musa Ibrahim",
       distance: 8.2,
       estimatedTime: 18,
-      amount: 12000,
     },
     {
       id: "3",
       orderNumber: "ORD-003",
+      customerName: "Fatima Sani",
+      driverName: "Not assigned",
       pickupLocation: "Kubwa, Abuja",
       deliveryLocation: "Gwarinpa, Abuja",
       status: "pending",
-      driverName: "Not assigned",
       distance: 15.4,
       estimatedTime: 30,
-      amount: 10000,
     },
   ];
 
@@ -55,16 +55,16 @@ const CustomerOrders = () => {
         </Pressable>
 
         <Text className="mt-5 text-2xl font-bold text-white">
-          My Orders
+          Manage Deliveries
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {orders.length} orders
+          {deliveries.length} deliveries
         </Text>
 
       </View>
 
-      {/* Orders */}
+      {/* Delivery List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -73,83 +73,81 @@ const CustomerOrders = () => {
         }}
       >
 
-        {orders.map((order) => (
+        {deliveries.map((delivery) => (
           <View
-            key={order.id}
+            key={delivery.id}
             className="mb-4 rounded-2xl bg-white p-5"
           >
 
-            {/* Order Header */}
+            {/* Header */}
             <View className="flex-row items-center justify-between">
 
               <View>
                 <Text className="text-lg font-bold text-slate-900">
-                  {order.orderNumber}
+                  {delivery.orderNumber}
                 </Text>
 
                 <Text className="mt-1 text-sm text-slate-500">
-                  Delivery Order
+                  {delivery.customerName}
                 </Text>
               </View>
 
               {/* Status */}
               <View
                 className={`rounded-full px-3 py-1 ${
-                  order.status === "pending"
+                  delivery.status === "pending"
                     ? "bg-orange-100"
-                    : order.status === "in_transit"
+                    : delivery.status === "in_transit"
                       ? "bg-blue-100"
                       : "bg-green-100"
                 }`}
               >
                 <Text
                   className={`text-xs font-bold ${
-                    order.status === "pending"
+                    delivery.status === "pending"
                       ? "text-orange-600"
-                      : order.status === "in_transit"
+                      : delivery.status === "in_transit"
                         ? "text-blue-600"
                         : "text-green-600"
                   }`}
                 >
-                  {order.status === "in_transit"
+                  {delivery.status === "in_transit"
                     ? "IN TRANSIT"
-                    : order.status.toUpperCase()}
+                    : delivery.status.toUpperCase()}
                 </Text>
               </View>
 
             </View>
 
+            {/* Driver */}
+            <View className="mt-4">
+              <Text className="text-xs font-semibold text-slate-400">
+                DRIVER
+              </Text>
+
+              <Text className="mt-1 font-semibold text-slate-800">
+                🚚 {delivery.driverName}
+              </Text>
+            </View>
+
             {/* Route */}
-            <View className="mt-5 border-t border-slate-100 pt-4">
+            <View className="mt-4 border-t border-slate-100 pt-4">
 
               <Text className="text-xs font-semibold text-slate-400">
                 ROUTE
               </Text>
 
               <Text className="mt-2 text-sm text-slate-700">
-                📍 {order.pickupLocation}
+                📍 {delivery.pickupLocation}
               </Text>
 
               <Text className="mt-2 text-sm text-slate-700">
-                📍 {order.deliveryLocation}
+                📍 {delivery.deliveryLocation}
               </Text>
 
             </View>
 
-            {/* Driver */}
-            <View className="mt-4">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                DRIVER
-              </Text>
-
-              <Text className="mt-1 font-semibold text-slate-800">
-                🚚 {order.driverName}
-              </Text>
-
-            </View>
-
-            {/* Information */}
+            {/* Distance / Time */}
             <View className="mt-4 flex-row justify-between border-t border-slate-100 pt-4">
 
               <View>
@@ -158,70 +156,38 @@ const CustomerOrders = () => {
                 </Text>
 
                 <Text className="mt-1 font-semibold text-slate-800">
-                  {order.distance} km
+                  {delivery.distance} km
                 </Text>
               </View>
 
               <View>
                 <Text className="text-xs text-slate-400">
-                  TIME
+                  ESTIMATED TIME
                 </Text>
 
                 <Text className="mt-1 font-semibold text-slate-800">
-                  {order.estimatedTime} min
-                </Text>
-              </View>
-
-              <View>
-                <Text className="text-xs text-slate-400">
-                  AMOUNT
-                </Text>
-
-                <Text className="mt-1 font-bold text-slate-800">
-                  ₦{order.amount.toLocaleString()}
+                  {delivery.estimatedTime} min
                 </Text>
               </View>
 
             </View>
 
-            {/* Actions */}
-            <View className="mt-5 flex-row gap-3">
-
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/(customer)/order-details",
-                    params: {
-                      id: order.id,
-                    },
-                  })
-                }
-                className="flex-1 rounded-xl bg-blue-700 py-3"
-              >
-                <Text className="text-center font-bold text-white">
-                  VIEW ORDER
-                </Text>
-              </Pressable>
-
-              {order.status === "in_transit" && (
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(customer)/track-delivery",
-                      params: {
-                        id: order.id,
-                      },
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-green-600 py-3"
-                >
-                  <Text className="text-center font-bold text-white">
-                    TRACK
-                  </Text>
-                </Pressable>
-              )}
-
-            </View>
+            {/* View */}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/(admin)/delivery-details",
+                  params: {
+                    id: delivery.id,
+                  },
+                })
+              }
+              className="mt-5 rounded-xl bg-blue-700 py-3"
+            >
+              <Text className="text-center font-bold text-white">
+                VIEW DELIVERY
+              </Text>
+            </Pressable>
 
           </View>
         ))}
@@ -231,4 +197,4 @@ const CustomerOrders = () => {
   );
 };
 
-export default CustomerOrders;
+export default AdminDeliveries;

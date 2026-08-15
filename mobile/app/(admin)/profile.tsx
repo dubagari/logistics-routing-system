@@ -1,16 +1,16 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
-const CustomerProfile = () => {
+const AdminProfile = () => {
   const router = useRouter();
 
-  // Temporary customer data.
-  // This will come from authentication/backend later.
-  const customer = {
-    name: "Abubakar Ali",
-    email: "abubakar@example.com",
-    phone: "08012345678",
-    address: "Abuja, Nigeria",
+  // Temporary admin data.
+  // Later this will come from the authenticated user.
+  const admin = {
+    name: "System Administrator",
+    email: "admin@example.com",
+    phone: "08000000000",
+    role: "Administrator",
   };
 
   return (
@@ -18,7 +18,6 @@ const CustomerProfile = () => {
 
       {/* Fixed Header */}
       <View className="bg-blue-700 px-5 pb-7 pt-14">
-
         <Pressable onPress={() => router.back()}>
           <Text className="font-semibold text-white">
             ← Back
@@ -26,13 +25,12 @@ const CustomerProfile = () => {
         </Pressable>
 
         <Text className="mt-5 text-2xl font-bold text-white">
-          My Profile
+          Admin Profile
         </Text>
 
         <Text className="mt-1 text-blue-100">
           Manage your account
         </Text>
-
       </View>
 
       {/* Scrollable Content */}
@@ -55,20 +53,22 @@ const CustomerProfile = () => {
           </View>
 
           <Text className="mt-4 text-xl font-bold text-slate-900">
-            {customer.name}
+            {admin.name}
           </Text>
 
-          <Text className="mt-1 text-sm text-slate-500">
-            Customer
-          </Text>
+          <View className="mt-2 rounded-full bg-blue-100 px-4 py-1">
+            <Text className="text-xs font-bold text-blue-700">
+              {admin.role.toUpperCase()}
+            </Text>
+          </View>
 
         </View>
 
-        {/* Personal Information */}
+        {/* Account Information */}
         <View className="mt-5 rounded-2xl bg-white p-5">
 
           <Text className="text-lg font-bold text-slate-900">
-            Personal Information
+            Account Information
           </Text>
 
           <View className="mt-5">
@@ -78,7 +78,7 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base font-semibold text-slate-800">
-              {customer.name}
+              {admin.name}
             </Text>
 
           </View>
@@ -90,7 +90,7 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base text-slate-800">
-              {customer.email}
+              {admin.email}
             </Text>
 
           </View>
@@ -102,26 +102,14 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base text-slate-800">
-              📞 {customer.phone}
-            </Text>
-
-          </View>
-
-          <View className="mt-4">
-
-            <Text className="text-xs font-semibold text-slate-400">
-              ADDRESS
-            </Text>
-
-            <Text className="mt-1 text-base text-slate-800">
-              📍 {customer.address}
+              📞 {admin.phone}
             </Text>
 
           </View>
 
         </View>
 
-        {/* Account Actions */}
+        {/* Actions */}
         <View className="mt-5">
 
           <Pressable
@@ -158,4 +146,4 @@ const CustomerProfile = () => {
   );
 };
 
-export default CustomerProfile;
+export default AdminProfile;

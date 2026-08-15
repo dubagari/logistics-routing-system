@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
-const CustomerOrders = () => {
+const AdminOrders = () => {
   const router = useRouter();
 
   // Temporary data.
@@ -10,34 +10,34 @@ const CustomerOrders = () => {
     {
       id: "1",
       orderNumber: "ORD-001",
+      customerName: "Abubakar Ali",
+      customerPhone: "08012345678",
       pickupLocation: "Warehouse, Abuja",
       deliveryLocation: "Garki, Abuja",
-      status: "in_transit",
       driverName: "Ahmed Musa",
-      distance: 12.5,
-      estimatedTime: 25,
+      status: "in_transit",
       amount: 15000,
     },
     {
       id: "2",
       orderNumber: "ORD-002",
+      customerName: "Musa Ibrahim",
+      customerPhone: "08023456789",
       pickupLocation: "Wuse, Abuja",
       deliveryLocation: "Maitama, Abuja",
-      status: "delivered",
       driverName: "Musa Ibrahim",
-      distance: 8.2,
-      estimatedTime: 18,
+      status: "delivered",
       amount: 12000,
     },
     {
       id: "3",
       orderNumber: "ORD-003",
+      customerName: "Fatima Sani",
+      customerPhone: "08034567890",
       pickupLocation: "Kubwa, Abuja",
       deliveryLocation: "Gwarinpa, Abuja",
-      status: "pending",
       driverName: "Not assigned",
-      distance: 15.4,
-      estimatedTime: 30,
+      status: "pending",
       amount: 10000,
     },
   ];
@@ -47,7 +47,6 @@ const CustomerOrders = () => {
 
       {/* Fixed Header */}
       <View className="bg-blue-700 px-5 pb-7 pt-14">
-
         <Pressable onPress={() => router.back()}>
           <Text className="font-semibold text-white">
             ← Back
@@ -55,16 +54,15 @@ const CustomerOrders = () => {
         </Pressable>
 
         <Text className="mt-5 text-2xl font-bold text-white">
-          My Orders
+          Manage Orders
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {orders.length} orders
+          {orders.length} orders registered
         </Text>
-
       </View>
 
-      {/* Orders */}
+      {/* Orders List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -72,13 +70,11 @@ const CustomerOrders = () => {
           paddingBottom: 120,
         }}
       >
-
         {orders.map((order) => (
           <View
             key={order.id}
             className="mb-4 rounded-2xl bg-white p-5"
           >
-
             {/* Order Header */}
             <View className="flex-row items-center justify-between">
 
@@ -88,7 +84,7 @@ const CustomerOrders = () => {
                 </Text>
 
                 <Text className="mt-1 text-sm text-slate-500">
-                  Delivery Order
+                  {order.customerName}
                 </Text>
               </View>
 
@@ -119,8 +115,23 @@ const CustomerOrders = () => {
 
             </View>
 
-            {/* Route */}
-            <View className="mt-5 border-t border-slate-100 pt-4">
+            {/* Customer */}
+            <View className="mt-4">
+              <Text className="text-xs font-semibold text-slate-400">
+                CUSTOMER
+              </Text>
+
+              <Text className="mt-1 font-semibold text-slate-800">
+                {order.customerName}
+              </Text>
+
+              <Text className="mt-1 text-sm text-slate-500">
+                📞 {order.customerPhone}
+              </Text>
+            </View>
+
+            {/* Locations */}
+            <View className="mt-4 border-t border-slate-100 pt-4">
 
               <Text className="text-xs font-semibold text-slate-400">
                 ROUTE
@@ -136,39 +147,16 @@ const CustomerOrders = () => {
 
             </View>
 
-            {/* Driver */}
-            <View className="mt-4">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                DRIVER
-              </Text>
-
-              <Text className="mt-1 font-semibold text-slate-800">
-                🚚 {order.driverName}
-              </Text>
-
-            </View>
-
-            {/* Information */}
+            {/* Driver + Amount */}
             <View className="mt-4 flex-row justify-between border-t border-slate-100 pt-4">
 
               <View>
                 <Text className="text-xs text-slate-400">
-                  DISTANCE
+                  DRIVER
                 </Text>
 
                 <Text className="mt-1 font-semibold text-slate-800">
-                  {order.distance} km
-                </Text>
-              </View>
-
-              <View>
-                <Text className="text-xs text-slate-400">
-                  TIME
-                </Text>
-
-                <Text className="mt-1 font-semibold text-slate-800">
-                  {order.estimatedTime} min
+                  {order.driverName}
                 </Text>
               </View>
 
@@ -184,51 +172,29 @@ const CustomerOrders = () => {
 
             </View>
 
-            {/* Actions */}
-            <View className="mt-5 flex-row gap-3">
-
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/(customer)/order-details",
-                    params: {
-                      id: order.id,
-                    },
-                  })
-                }
-                className="flex-1 rounded-xl bg-blue-700 py-3"
-              >
-                <Text className="text-center font-bold text-white">
-                  VIEW ORDER
-                </Text>
-              </Pressable>
-
-              {order.status === "in_transit" && (
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(customer)/track-delivery",
-                      params: {
-                        id: order.id,
-                      },
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-green-600 py-3"
-                >
-                  <Text className="text-center font-bold text-white">
-                    TRACK
-                  </Text>
-                </Pressable>
-              )}
-
-            </View>
+            {/* View Button */}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/(admin)/order-details",
+                  params: {
+                    id: order.id,
+                  },
+                })
+              }
+              className="mt-5 rounded-xl bg-blue-700 py-3"
+            >
+              <Text className="text-center font-bold text-white">
+                VIEW ORDER
+              </Text>
+            </Pressable>
 
           </View>
         ))}
-
       </ScrollView>
+
     </View>
   );
 };
 
-export default CustomerOrders;
+export default AdminOrders;

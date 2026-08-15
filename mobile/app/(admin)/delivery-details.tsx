@@ -1,61 +1,62 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-const CustomerOrderDetails = () => {
+const AdminDeliveryDetails = () => {
   const router = useRouter();
 
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // Temporary data — backend will replace this later.
-  const orders = [
+  // Temporary data.
+  // Later this will come from the backend.
+  const deliveries = [
     {
       id: "1",
       orderNumber: "ORD-001",
+      customerName: "Abubakar Ali",
+      customerPhone: "08012345678",
+      driverName: "Ahmed Musa",
+      driverPhone: "08012345678",
       pickupLocation: "Warehouse, Abuja",
       deliveryLocation: "Garki, Abuja",
       status: "in_transit",
-      driverName: "Ahmed Musa",
-      driverPhone: "08012345678",
       distance: 12.5,
       estimatedTime: 25,
-      amount: 15000,
-      packageDescription: "Electronics and accessories",
     },
     {
       id: "2",
       orderNumber: "ORD-002",
+      customerName: "Musa Ibrahim",
+      customerPhone: "08023456789",
+      driverName: "Musa Ibrahim",
+      driverPhone: "08023456789",
       pickupLocation: "Wuse, Abuja",
       deliveryLocation: "Maitama, Abuja",
       status: "delivered",
-      driverName: "Musa Ibrahim",
-      driverPhone: "08023456789",
       distance: 8.2,
       estimatedTime: 18,
-      amount: 12000,
-      packageDescription: "Documents",
     },
     {
       id: "3",
       orderNumber: "ORD-003",
+      customerName: "Fatima Sani",
+      customerPhone: "08034567890",
+      driverName: "Not assigned",
+      driverPhone: "",
       pickupLocation: "Kubwa, Abuja",
       deliveryLocation: "Gwarinpa, Abuja",
       status: "pending",
-      driverName: "Not assigned",
-      driverPhone: "",
       distance: 15.4,
       estimatedTime: 30,
-      amount: 10000,
-      packageDescription: "Clothing items",
     },
   ];
 
-  const order = orders.find((item) => item.id === id);
+  const delivery = deliveries.find((item) => item.id === id);
 
-  if (!order) {
+  if (!delivery) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-100 px-5">
         <Text className="text-xl font-bold text-slate-900">
-          Order not found
+          Delivery not found
         </Text>
 
         <Pressable
@@ -83,11 +84,11 @@ const CustomerOrderDetails = () => {
         </Pressable>
 
         <Text className="mt-5 text-2xl font-bold text-white">
-          Order Details
+          Delivery Details
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {order.orderNumber}
+          {delivery.orderNumber}
         </Text>
 
       </View>
@@ -105,36 +106,36 @@ const CustomerOrderDetails = () => {
         <View className="rounded-2xl bg-white p-5">
 
           <Text className="text-xs font-semibold text-slate-400">
-            ORDER STATUS
+            DELIVERY STATUS
           </Text>
 
           <View className="mt-2 flex-row items-center justify-between">
 
             <Text className="text-xl font-bold capitalize text-slate-900">
-              {order.status.replace("_", " ")}
+              {delivery.status.replace("_", " ")}
             </Text>
 
             <View
               className={`rounded-full px-3 py-2 ${
-                order.status === "pending"
+                delivery.status === "pending"
                   ? "bg-orange-100"
-                  : order.status === "in_transit"
+                  : delivery.status === "in_transit"
                     ? "bg-blue-100"
                     : "bg-green-100"
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
-                  order.status === "pending"
+                  delivery.status === "pending"
                     ? "text-orange-600"
-                    : order.status === "in_transit"
+                    : delivery.status === "in_transit"
                       ? "text-blue-600"
                       : "text-green-600"
                 }`}
               >
-                {order.status === "in_transit"
+                {delivery.status === "in_transit"
                   ? "IN TRANSIT"
-                  : order.status.toUpperCase()}
+                  : delivery.status.toUpperCase()}
               </Text>
             </View>
 
@@ -142,7 +143,75 @@ const CustomerOrderDetails = () => {
 
         </View>
 
-        {/* Route */}
+        {/* Customer */}
+        <View className="mt-5 rounded-2xl bg-white p-5">
+
+          <Text className="text-lg font-bold text-slate-900">
+            Customer
+          </Text>
+
+          <View className="mt-5">
+
+            <Text className="text-xs font-semibold text-slate-400">
+              NAME
+            </Text>
+
+            <Text className="mt-1 text-base font-semibold text-slate-800">
+              {delivery.customerName}
+            </Text>
+
+          </View>
+
+          <View className="mt-4">
+
+            <Text className="text-xs font-semibold text-slate-400">
+              PHONE
+            </Text>
+
+            <Text className="mt-1 text-base text-slate-800">
+              📞 {delivery.customerPhone}
+            </Text>
+
+          </View>
+
+        </View>
+
+        {/* Driver */}
+        <View className="mt-5 rounded-2xl bg-white p-5">
+
+          <Text className="text-lg font-bold text-slate-900">
+            Assigned Driver
+          </Text>
+
+          <View className="mt-5">
+
+            <Text className="text-xs font-semibold text-slate-400">
+              DRIVER
+            </Text>
+
+            <Text className="mt-1 text-base font-semibold text-slate-800">
+              🚚 {delivery.driverName}
+            </Text>
+
+          </View>
+
+          {delivery.driverPhone && (
+            <View className="mt-4">
+
+              <Text className="text-xs font-semibold text-slate-400">
+                PHONE
+              </Text>
+
+              <Text className="mt-1 text-base text-slate-800">
+                📞 {delivery.driverPhone}
+              </Text>
+
+            </View>
+          )}
+
+        </View>
+
+        {/* Locations */}
         <View className="mt-5 rounded-2xl bg-white p-5">
 
           <Text className="text-lg font-bold text-slate-900">
@@ -156,7 +225,7 @@ const CustomerOrderDetails = () => {
             </Text>
 
             <Text className="mt-2 text-base text-slate-800">
-              📍 {order.pickupLocation}
+              📍 {delivery.pickupLocation}
             </Text>
 
           </View>
@@ -168,56 +237,10 @@ const CustomerOrderDetails = () => {
             </Text>
 
             <Text className="mt-2 text-base text-slate-800">
-              📍 {order.deliveryLocation}
+              📍 {delivery.deliveryLocation}
             </Text>
 
           </View>
-
-        </View>
-
-        {/* Driver */}
-        <View className="mt-5 rounded-2xl bg-white p-5">
-
-          <Text className="text-lg font-bold text-slate-900">
-            Driver
-          </Text>
-
-          <Text className="mt-5 text-xs font-semibold text-slate-400">
-            DRIVER NAME
-          </Text>
-
-          <Text className="mt-1 text-base font-semibold text-slate-800">
-            🚚 {order.driverName}
-          </Text>
-
-          {order.driverPhone && (
-            <>
-              <Text className="mt-4 text-xs font-semibold text-slate-400">
-                PHONE
-              </Text>
-
-              <Text className="mt-1 text-base text-slate-800">
-                📞 {order.driverPhone}
-              </Text>
-            </>
-          )}
-
-        </View>
-
-        {/* Package */}
-        <View className="mt-5 rounded-2xl bg-white p-5">
-
-          <Text className="text-lg font-bold text-slate-900">
-            Package
-          </Text>
-
-          <Text className="mt-5 text-xs font-semibold text-slate-400">
-            DESCRIPTION
-          </Text>
-
-          <Text className="mt-1 text-base text-slate-800">
-            {order.packageDescription}
-          </Text>
 
         </View>
 
@@ -236,27 +259,17 @@ const CustomerOrderDetails = () => {
               </Text>
 
               <Text className="mt-1 font-semibold text-slate-800">
-                {order.distance} km
+                {delivery.distance} km
               </Text>
             </View>
 
             <View>
               <Text className="text-xs text-slate-400">
-                TIME
+                ESTIMATED TIME
               </Text>
 
               <Text className="mt-1 font-semibold text-slate-800">
-                {order.estimatedTime} min
-              </Text>
-            </View>
-
-            <View>
-              <Text className="text-xs text-slate-400">
-                AMOUNT
-              </Text>
-
-              <Text className="mt-1 font-bold text-slate-800">
-                ₦{order.amount.toLocaleString()}
+                {delivery.estimatedTime} min
               </Text>
             </View>
 
@@ -267,33 +280,29 @@ const CustomerOrderDetails = () => {
         {/* Actions */}
         <View className="mt-5">
 
-          {order.status === "in_transit" && (
+          {delivery.status === "pending" && (
             <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/(customer)/track-delivery",
-                  params: {
-                    id: order.id,
-                  },
-                })
-              }
+              onPress={() => {}}
               className="rounded-xl bg-blue-700 py-4"
             >
               <Text className="text-center font-bold text-white">
-                TRACK DELIVERY
+                ASSIGN DRIVER
               </Text>
             </Pressable>
           )}
 
-          {order.status === "pending" && (
-            <View className="rounded-xl bg-orange-100 py-4">
-              <Text className="text-center font-bold text-orange-600">
-                WAITING FOR DRIVER
+          {delivery.status === "in_transit" && (
+            <Pressable
+              onPress={() => {}}
+              className="rounded-xl bg-green-600 py-4"
+            >
+              <Text className="text-center font-bold text-white">
+                MARK AS DELIVERED
               </Text>
-            </View>
+            </Pressable>
           )}
 
-          {order.status === "delivered" && (
+          {delivery.status === "delivered" && (
             <View className="rounded-xl bg-green-100 py-4">
               <Text className="text-center font-bold text-green-700">
                 ✓ DELIVERY COMPLETED
@@ -308,4 +317,4 @@ const CustomerOrderDetails = () => {
   );
 };
 
-export default CustomerOrderDetails;
+export default AdminDeliveryDetails;

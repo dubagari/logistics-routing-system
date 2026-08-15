@@ -1,75 +1,117 @@
-import { Text, View, Pressable, ScrollView } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useAppSelector } from "../../hooks/redux";
 
 const Deliveries = () => {
+  const router = useRouter();
+
   const deliveries = useAppSelector(
     (state) => state.deliveries.deliveries
   );
 
   return (
-    <ScrollView className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-slate-100">
       {/* Header */}
       <View className="bg-blue-700 px-5 pb-6 pt-14">
-        <Text className="text-2xl font-bold text-white">
-          Today's Deliveries
+        <Text className="text-3xl font-bold text-white">
+          My Deliveries
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {deliveries.length} deliveries assigned to you
+          {deliveries.length} deliveries assigned
         </Text>
       </View>
 
       {/* Delivery List */}
-      <View className="p-5">
-        {deliveries.map((delivery) => (
-          <View
-            key={delivery.id}
+      <FlatList
+        data={deliveries}
+        keyExtractor={(item) => item.id}
+       
+        showsVerticalScrollIndicator={false}
+         contentContainerStyle={{
+          paddingBottom: 110,
+        }}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/(driver)/delivery-details",
+                params: {
+                  id: item.id,
+                },
+              })
+            }
             className="mb-4 rounded-2xl bg-white p-5"
           >
+            {/* Order number */}
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-bold text-slate-900">
-                {delivery.orderNumber}
+                {item.orderNumber}
               </Text>
 
-              <Text className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-600">
-                {delivery.status}
+              {/* Status */}
+              <View
+                className={`rounded-full px-3 py-1 ${
+                  item.status === "pending"
+                    ? "bg-orange-100"
+                    : item.status === "in_transit"
+                      ? "bg-blue-100"
+                      : "bg-green-100"
+                }`}
+              >
+                <Text
+                  className={`text-xs font-bold ${
+                    item.status === "pending"
+                      ? "text-orange-600"
+                      : item.status === "in_transit"
+                        ? "text-blue-600"
+                        : "text-green-600"
+                  }`}
+                >
+                  {item.status === "in_transit"
+                    ? "IN TRANSIT"
+                    : item.status.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+
+            {/* Customer */}
+            <Text className="mt-4 text-base font-semibold text-slate-800">
+              {item.customerName}
+            </Text>
+
+            <Text className="mt-1 text-sm text-slate-500">
+              📞 {item.customerPhone}
+            </Text>
+
+            {/* Locations */}
+            <View className="mt-4">
+              <Text className="text-sm text-slate-400">
+                Pickup
+              </Text>
+
+              <Text className="mt-1 text-slate-700">
+                📍 {item.pickupLocation}
+              </Text>
+
+              <Text className="mt-3 text-sm text-slate-400">
+                Delivery
+              </Text>
+
+              <Text className="mt-1 text-slate-700">
+                📍 {item.deliveryLocation}
               </Text>
             </View>
 
-            <Text className="mt-4 text-base font-semibold text-slate-800">
-              {delivery.customerName}
-            </Text>
-
-            <Text className="mt-1 text-slate-500">
-              📞 {delivery.customerPhone}
-            </Text>
-
-            <View className="my-4 h-px bg-slate-200" />
-
-            <Text className="text-sm text-slate-400">
-              Pickup
-            </Text>
-
-            <Text className="mt-1 font-medium text-slate-800">
-              {delivery.pickupLocation}
-            </Text>
-
-            <Text className="mt-3 text-sm text-slate-400">
-              Delivery
-            </Text>
-
-            <Text className="mt-1 font-medium text-slate-800">
-              {delivery.deliveryLocation}
-            </Text>
-
-            <View className="mt-4 flex-row justify-between">
+            {/* Distance / Time */}
+            <View className="mt-5 flex-row justify-between border-t border-slate-100 pt-4">
               <View>
                 <Text className="text-xs text-slate-400">
                   Distance
                 </Text>
 
                 <Text className="mt-1 font-semibold text-slate-800">
-                  {delivery.distance} km
+                  {item.distance} km
                 </Text>
               </View>
 
@@ -79,20 +121,25 @@ const Deliveries = () => {
                 </Text>
 
                 <Text className="mt-1 font-semibold text-slate-800">
-                  {delivery.estimatedTime} min
+                  {item.estimatedTime} min
                 </Text>
               </View>
-            </View>
 
-            <Pressable className="mt-5 rounded-xl bg-blue-700 py-4">
-              <Text className="text-center font-bold text-white">
-                VIEW DETAILS
+              <Text className="self-end font-bold text-blue-700">
+                View →
               </Text>
-            </Pressable>
+            </View>
+          </Pressable>
+        )}
+        ListEmptyComponent={
+          <View className="items-center py-20">
+            <Text className="text-lg font-semibold text-slate-500">
+              No deliveries found
+            </Text>
           </View>
-        ))}
-      </View>
-    </ScrollView>
+        }
+      />
+    </View>
   );
 };
 
