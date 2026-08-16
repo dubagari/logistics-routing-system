@@ -4,13 +4,223 @@ import Driver from "../models/Driver.js";
 import User from "../models/User.js";
 import { calculateDistance } from "../utils/calculateDistance.js";
 import { calculateEstimatedTime } from "../utils/calculateEstimatedTime.js";
+import { getRoadRoute } from "../services/routingService.js";
 // ========================================
 // Create Delivery
 // Customer creates a delivery
 // ========================================
-export const createDelivery = async (req, res) => {
+// export const createDelivery = async (req, res) => {
 
   
+//   try {
+//     const {
+//       pickupLocation,
+//       deliveryLocation,
+//       packageDescription,
+//       packageWeight,
+//       notes,
+//     } = req.body;
+
+//     // ========================================
+//     // Validate Pickup Location
+//     // ========================================
+//     if (
+//       !pickupLocation?.address ||
+//       pickupLocation.latitude === undefined ||
+//       pickupLocation.longitude === undefined
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Valid pickup location is required",
+//       });
+//     }
+
+//     // ========================================
+//     // Validate Delivery Location
+//     // ========================================
+//     if (
+//       !deliveryLocation?.address ||
+//       deliveryLocation.latitude === undefined ||
+//       deliveryLocation.longitude === undefined
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Valid delivery location is required",
+//       });
+//     }
+
+//     // ========================================
+//     // Validate Package Description
+//     // ========================================
+//     if (!packageDescription?.trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Package description is required",
+//       });
+//     }
+
+//     // ========================================
+//     // Validate Coordinates
+//     // ========================================
+//     const pickupLatitude = Number(
+//       pickupLocation.latitude
+//     );
+
+//     const pickupLongitude = Number(
+//       pickupLocation.longitude
+//     );
+
+//     const deliveryLatitude = Number(
+//       deliveryLocation.latitude
+//     );
+
+//     const deliveryLongitude = Number(
+//       deliveryLocation.longitude
+//     );
+
+//     if (
+//       !Number.isFinite(pickupLatitude) ||
+//       pickupLatitude < -90 ||
+//       pickupLatitude > 90
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid pickup latitude",
+//       });
+//     }
+
+//     if (
+//       !Number.isFinite(pickupLongitude) ||
+//       pickupLongitude < -180 ||
+//       pickupLongitude > 180
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid pickup longitude",
+//       });
+//     }
+
+//     if (
+//       !Number.isFinite(deliveryLatitude) ||
+//       deliveryLatitude < -90 ||
+//       deliveryLatitude > 90
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid delivery latitude",
+//       });
+//     }
+
+//     if (
+//       !Number.isFinite(deliveryLongitude) ||
+//       deliveryLongitude < -180 ||
+//       deliveryLongitude > 180
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid delivery longitude",
+//       });
+//     }
+
+//     // ========================================
+// // Calculate Distance
+// // ========================================
+
+// // const distance = calculateDistance(
+// //   pickupLatitude,
+// //   pickupLongitude,
+// //   deliveryLatitude,
+// //   deliveryLongitude
+// // );
+
+// // const estimatedTime = calculateEstimatedTime(distance);
+
+
+
+// // ========================================
+// // Calculate Road Route
+// // ========================================
+
+// const route = await getRoadRoute(
+//   pickupLatitude,
+//   pickupLongitude,
+//   deliveryLatitude,
+//   deliveryLongitude
+// );
+
+// const distance = route.distance;
+// const estimatedTime = route.estimatedTime;
+//     // ========================================
+//     // Validate Package Weight
+//     // ========================================
+//     const weight = Number(packageWeight || 0);
+
+//     if (!Number.isFinite(weight) || weight < 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid package weight",
+//       });
+//     }
+
+//     // ========================================
+//     // Create Delivery
+//     // ========================================
+//     const delivery = await Delivery.create({
+//       customer: req.user._id,
+
+//       pickupLocation: {
+//         address: pickupLocation.address,
+//         latitude: pickupLatitude,
+//         longitude: pickupLongitude,
+//       },
+
+//       deliveryLocation: {
+//         address: deliveryLocation.address,
+//         latitude: deliveryLatitude,
+//         longitude: deliveryLongitude,
+//       },
+
+//       packageDescription:
+//         packageDescription.trim(),
+
+//       packageWeight: weight,
+
+//       notes: notes?.trim() || "",
+
+//       distance,
+
+//       estimatedTime
+//     });
+
+//     // ========================================
+//     // Populate Customer
+//     // ========================================
+//     const populatedDelivery =
+//       await Delivery.findById(delivery._id)
+//       .populate(        "customer",
+//         "-password"
+//       );
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Delivery created successfully",
+//       delivery: populatedDelivery,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Create delivery error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
+
+export const createDelivery = async (req, res) => {
   try {
     const {
       pickupLocation,
@@ -122,20 +332,23 @@ export const createDelivery = async (req, res) => {
     }
 
     // ========================================
-// Calculate Distance
-// ========================================
+    // Calculate Road Route
+    // ========================================
 
-const distance = calculateDistance(
-  pickupLatitude,
-  pickupLongitude,
-  deliveryLatitude,
-  deliveryLongitude
-);
+    const route = await getRoadRoute(
+      pickupLatitude,
+      pickupLongitude,
+      deliveryLatitude,
+      deliveryLongitude
+    );
 
-const estimatedTime = calculateEstimatedTime(distance);
+    const distance = route.distance;
+    const estimatedTime = route.estimatedTime;
+
     // ========================================
     // Validate Package Weight
     // ========================================
+
     const weight = Number(packageWeight || 0);
 
     if (!Number.isFinite(weight) || weight < 0) {
@@ -148,6 +361,7 @@ const estimatedTime = calculateEstimatedTime(distance);
     // ========================================
     // Create Delivery
     // ========================================
+
     const delivery = await Delivery.create({
       customer: req.user._id,
 
@@ -172,15 +386,18 @@ const estimatedTime = calculateEstimatedTime(distance);
 
       distance,
 
-      estimatedTime
+      estimatedTime,
     });
 
     // ========================================
     // Populate Customer
     // ========================================
+
     const populatedDelivery =
-      await Delivery.findById(delivery._id)
-      .populate(        "customer",
+      await Delivery.findById(
+        delivery._id
+      ).populate(
+        "customer",
         "-password"
       );
 
@@ -201,6 +418,7 @@ const estimatedTime = calculateEstimatedTime(distance);
     });
   }
 };
+
 
 // ========================================
 // Get Customer Deliveries

@@ -13,6 +13,10 @@ import driverRoutes from "./routes/driverRoutes.js";
 
 import deliveryRoutes from "./routes/deliveryRoutes.js";
 
+import routingTestRoutes from "./routes/routingTestRoutes.js";
+
+
+
 
 
 dotenv.config();
@@ -40,6 +44,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 
 app.use("/api/drivers", driverRoutes);
+
+
+app.use("/api/routing", routingTestRoutes);
 
 // ========================================
 // Delivery Routes
