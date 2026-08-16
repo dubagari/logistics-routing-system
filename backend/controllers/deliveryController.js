@@ -1,223 +1,11 @@
 import mongoose from "mongoose";
 import Delivery from "../models/Delivery.js";
 import Driver from "../models/Driver.js";
-import User from "../models/User.js";
-import { calculateDistance } from "../utils/calculateDistance.js";
-import { calculateEstimatedTime } from "../utils/calculateEstimatedTime.js";
 import { getRoadRoute } from "../services/routingService.js";
-// ========================================
-// Create Delivery
-// Customer creates a delivery
-// ========================================
-// export const createDelivery = async (req, res) => {
+import { checkIfOffRoute } from "../utils/routeUtils.js";
 
-  
-//   try {
-//     const {
-//       pickupLocation,
-//       deliveryLocation,
-//       packageDescription,
-//       packageWeight,
-//       notes,
-//     } = req.body;
+import { calculateRouteProgress } from "../utils/routeUtils.js";
 
-//     // ========================================
-//     // Validate Pickup Location
-//     // ========================================
-//     if (
-//       !pickupLocation?.address ||
-//       pickupLocation.latitude === undefined ||
-//       pickupLocation.longitude === undefined
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Valid pickup location is required",
-//       });
-//     }
-
-//     // ========================================
-//     // Validate Delivery Location
-//     // ========================================
-//     if (
-//       !deliveryLocation?.address ||
-//       deliveryLocation.latitude === undefined ||
-//       deliveryLocation.longitude === undefined
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Valid delivery location is required",
-//       });
-//     }
-
-//     // ========================================
-//     // Validate Package Description
-//     // ========================================
-//     if (!packageDescription?.trim()) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Package description is required",
-//       });
-//     }
-
-//     // ========================================
-//     // Validate Coordinates
-//     // ========================================
-//     const pickupLatitude = Number(
-//       pickupLocation.latitude
-//     );
-
-//     const pickupLongitude = Number(
-//       pickupLocation.longitude
-//     );
-
-//     const deliveryLatitude = Number(
-//       deliveryLocation.latitude
-//     );
-
-//     const deliveryLongitude = Number(
-//       deliveryLocation.longitude
-//     );
-
-//     if (
-//       !Number.isFinite(pickupLatitude) ||
-//       pickupLatitude < -90 ||
-//       pickupLatitude > 90
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid pickup latitude",
-//       });
-//     }
-
-//     if (
-//       !Number.isFinite(pickupLongitude) ||
-//       pickupLongitude < -180 ||
-//       pickupLongitude > 180
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid pickup longitude",
-//       });
-//     }
-
-//     if (
-//       !Number.isFinite(deliveryLatitude) ||
-//       deliveryLatitude < -90 ||
-//       deliveryLatitude > 90
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid delivery latitude",
-//       });
-//     }
-
-//     if (
-//       !Number.isFinite(deliveryLongitude) ||
-//       deliveryLongitude < -180 ||
-//       deliveryLongitude > 180
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid delivery longitude",
-//       });
-//     }
-
-//     // ========================================
-// // Calculate Distance
-// // ========================================
-
-// // const distance = calculateDistance(
-// //   pickupLatitude,
-// //   pickupLongitude,
-// //   deliveryLatitude,
-// //   deliveryLongitude
-// // );
-
-// // const estimatedTime = calculateEstimatedTime(distance);
-
-
-
-// // ========================================
-// // Calculate Road Route
-// // ========================================
-
-// const route = await getRoadRoute(
-//   pickupLatitude,
-//   pickupLongitude,
-//   deliveryLatitude,
-//   deliveryLongitude
-// );
-
-// const distance = route.distance;
-// const estimatedTime = route.estimatedTime;
-//     // ========================================
-//     // Validate Package Weight
-//     // ========================================
-//     const weight = Number(packageWeight || 0);
-
-//     if (!Number.isFinite(weight) || weight < 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid package weight",
-//       });
-//     }
-
-//     // ========================================
-//     // Create Delivery
-//     // ========================================
-//     const delivery = await Delivery.create({
-//       customer: req.user._id,
-
-//       pickupLocation: {
-//         address: pickupLocation.address,
-//         latitude: pickupLatitude,
-//         longitude: pickupLongitude,
-//       },
-
-//       deliveryLocation: {
-//         address: deliveryLocation.address,
-//         latitude: deliveryLatitude,
-//         longitude: deliveryLongitude,
-//       },
-
-//       packageDescription:
-//         packageDescription.trim(),
-
-//       packageWeight: weight,
-
-//       notes: notes?.trim() || "",
-
-//       distance,
-
-//       estimatedTime
-//     });
-
-//     // ========================================
-//     // Populate Customer
-//     // ========================================
-//     const populatedDelivery =
-//       await Delivery.findById(delivery._id)
-//       .populate(        "customer",
-//         "-password"
-//       );
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "Delivery created successfully",
-//       delivery: populatedDelivery,
-//     });
-//   } catch (error) {
-//     console.error(
-//       "Create delivery error:",
-//       error
-//     );
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error",
-//     });
-//   }
-// };
 
 
 export const createDelivery = async (req, res) => {
@@ -942,6 +730,146 @@ export const startDelivery = async (
 // Driver - Update Delivery Location
 // ========================================
 
+// export const updateDeliveryLocation = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const {
+//       latitude,
+//       longitude,
+//     } = req.body;
+
+    
+
+
+//     // ----------------------------------------
+// // Validate Coordinates
+// // ----------------------------------------
+
+// if (
+//   latitude === undefined ||
+//   longitude === undefined
+// ) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Latitude and longitude are required",
+//   });
+// }
+
+// const parsedLatitude = Number(latitude);
+// const parsedLongitude = Number(longitude);
+
+// if (
+//   !Number.isFinite(parsedLatitude) ||
+//   !Number.isFinite(parsedLongitude)
+// ) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Latitude and longitude must be numbers",
+//   });
+// }
+
+// if (
+//   parsedLatitude < -90 ||
+//   parsedLatitude > 90 ||
+//   parsedLongitude < -180 ||
+//   parsedLongitude > 180
+// ) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Invalid GPS coordinates",
+//   });
+// }
+
+
+
+
+
+
+
+
+
+//     // ----------------------------------------
+//     // Find Delivery
+//     // ----------------------------------------
+
+//     const delivery =
+//       await Delivery.findById(
+//         req.params.id
+//       );
+
+//     if (!delivery) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Delivery not found",
+//       });
+//     }
+
+//     // ----------------------------------------
+//     // Verify Driver
+//     // ----------------------------------------
+
+//     if (
+//       !delivery.driver ||
+//       delivery.driver.toString() !==
+//         req.user._id.toString()
+//     ) {
+//       return res.status(403).json({
+//         success: false,
+//         message:
+//           "This delivery is not assigned to you",
+//       });
+//     }
+
+//     // ----------------------------------------
+//     // Delivery Must Be In Transit
+//     // ----------------------------------------
+
+//     if (
+//       delivery.status !== "in_transit"
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "GPS location can only be updated for an in-transit delivery",
+//       });
+//     }
+
+//     // ----------------------------------------
+//     // Update Location
+//     // ----------------------------------------
+
+// delivery.currentLocation = {
+//   latitude:parsedLatitude,
+//   longitude:parsedLongitude,
+//   updatedAt: new Date(),
+// };
+
+
+//     await delivery.save();
+
+//     return res.json({
+//       success: true,
+//       message:
+//         "Delivery location updated successfully",
+//       location:
+//         delivery.currentLocation,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Update delivery location error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
+
 export const updateDeliveryLocation = async (
   req,
   res
@@ -991,6 +919,7 @@ export const updateDeliveryLocation = async (
       });
     }
 
+
     // ----------------------------------------
     // Find Delivery
     // ----------------------------------------
@@ -1006,6 +935,7 @@ export const updateDeliveryLocation = async (
         message: "Delivery not found",
       });
     }
+
 
     // ----------------------------------------
     // Verify Driver
@@ -1023,6 +953,7 @@ export const updateDeliveryLocation = async (
       });
     }
 
+
     // ----------------------------------------
     // Delivery Must Be In Transit
     // ----------------------------------------
@@ -1037,8 +968,9 @@ export const updateDeliveryLocation = async (
       });
     }
 
+
     // ----------------------------------------
-    // Update Location
+    // Update Current Location
     // ----------------------------------------
 
     delivery.currentLocation = {
@@ -1047,16 +979,124 @@ export const updateDeliveryLocation = async (
       updatedAt: new Date(),
     };
 
+
+    // ----------------------------------------
+    // Check If Driver Is Off Route
+    // ----------------------------------------
+
+    let routeStatus = null;
+    let routeRecalculated = false;
+
+
+    if (
+      delivery.routeGeometry &&
+      Array.isArray(
+        delivery.routeGeometry.coordinates
+      )
+    ) {
+
+      routeStatus =
+        checkIfOffRoute(
+          latitude,
+          longitude,
+          delivery.routeGeometry,
+          100
+        );
+
+
+      // --------------------------------------
+      // Driver Is OFF Route
+      // --------------------------------------
+
+      if (routeStatus.offRoute) {
+
+        console.log(
+          `Driver is off route. Recalculating route for delivery ${delivery._id}`
+        );
+
+
+        try {
+
+          const newRoute =
+            await getRoadRoute(
+              latitude,
+              longitude,
+              delivery.deliveryLocation.latitude,
+              delivery.deliveryLocation.longitude
+            );
+
+
+          // ------------------------------------
+          // Update Route
+          // ------------------------------------
+
+          delivery.routeGeometry =
+            newRoute.geometry;
+
+          delivery.distance =
+            Number(
+              newRoute.distance.toFixed(4)
+            );
+
+          delivery.estimatedTime =
+            Number(
+              newRoute.estimatedTime.toFixed(2)
+            );
+
+
+          routeRecalculated = true;
+
+
+          console.log(
+            `Route recalculated successfully. New distance: ${delivery.distance} km`
+          );
+
+        } catch (routingError) {
+
+          console.error(
+            "Route recalculation failed:",
+            routingError.message
+          );
+
+        }
+      }
+    }
+
+
+    // ----------------------------------------
+    // Save Delivery
+    // ----------------------------------------
+
     await delivery.save();
+
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
 
     return res.json({
       success: true,
+
       message:
         "Delivery location updated successfully",
+
       location:
         delivery.currentLocation,
+
+      routeStatus,
+
+      routeRecalculated,
+
+      distance:
+        delivery.distance,
+
+      estimatedTime:
+        delivery.estimatedTime,
+
     });
+
   } catch (error) {
+
     console.error(
       "Update delivery location error:",
       error
@@ -1515,6 +1555,469 @@ export const getDeliveryStats = async (req, res) => {
   } catch (error) {
     console.error(
       "Get delivery stats error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getDeliveryNavigation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ========================================
+    // Find Delivery
+    // ========================================
+
+    const delivery = await Delivery.findById(id)
+      .populate("customer", "-password")
+      .populate("driver", "-password");
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+    // ========================================
+    // Verify Driver
+    // ========================================
+
+    if (
+      !delivery.driver ||
+      delivery.driver._id.toString() !==
+        req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This delivery is not assigned to you",
+      });
+    }
+
+    // ========================================
+    // Delivery Must Be In Transit
+    // ========================================
+
+    if (delivery.status !== "in_transit") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Navigation is only available for an in-transit delivery",
+      });
+    }
+
+    // ========================================
+    // Check Current Driver Location
+    // ========================================
+
+    if (
+      delivery.currentLocation?.latitude === null ||
+      delivery.currentLocation?.longitude === null ||
+      delivery.currentLocation?.latitude === undefined ||
+      delivery.currentLocation?.longitude === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Driver location is not available",
+      });
+    }
+
+    const currentLatitude =
+      Number(
+        delivery.currentLocation.latitude
+      );
+
+    const currentLongitude =
+      Number(
+        delivery.currentLocation.longitude
+      );
+
+    // ========================================
+    // Destination
+    // ========================================
+
+    const destinationLatitude =
+      Number(
+        delivery.deliveryLocation.latitude
+      );
+
+    const destinationLongitude =
+      Number(
+        delivery.deliveryLocation.longitude
+      );
+
+    // ========================================
+    // Calculate New Road Route
+    // Driver Current Location → Destination
+    // ========================================
+
+    const route = await getRoadRoute(
+      currentLatitude,
+      currentLongitude,
+      destinationLatitude,
+      destinationLongitude
+    );
+
+    // ========================================
+    // Return Dynamic Navigation
+    // ========================================
+
+    return res.json({
+      success: true,
+      navigation: {
+        deliveryId: delivery._id,
+
+        pickupLocation:
+          delivery.pickupLocation,
+
+        deliveryLocation:
+          delivery.deliveryLocation,
+
+        currentLocation:
+          delivery.currentLocation,
+
+        routeGeometry:
+          route.geometry,
+
+        distance:
+          route.distance,
+
+        estimatedTime:
+          route.estimatedTime,
+
+        status:
+          delivery.status,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Get delivery navigation error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+export const checkDeliveryRoute = async (
+  req,
+  res
+) => {
+  try {
+    // ----------------------------------------
+    // Find Delivery
+    // ----------------------------------------
+
+    const delivery =
+      await Delivery.findById(
+        req.params.id
+      );
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Verify Driver
+    // ----------------------------------------
+
+    if (
+      !delivery.driver ||
+      delivery.driver.toString() !==
+        req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This delivery is not assigned to you",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Delivery Must Be In Transit
+    // ----------------------------------------
+
+    if (
+      delivery.status !== "in_transit"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Route checking is only available for an in-transit delivery",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Current Location Required
+    // ----------------------------------------
+
+    if (
+      delivery.currentLocation?.latitude === null ||
+      delivery.currentLocation?.longitude === null
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Current driver location is unavailable",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Route Geometry Required
+    // ----------------------------------------
+
+    if (
+      !delivery.routeGeometry ||
+      !Array.isArray(
+        delivery.routeGeometry.coordinates
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Route geometry is unavailable",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Check Route
+    // ----------------------------------------
+
+    const routeStatus =
+      checkIfOffRoute(
+        delivery.currentLocation.latitude,
+        delivery.currentLocation.longitude,
+        delivery.routeGeometry,
+        100
+      );
+
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+
+      deliveryId:
+        delivery._id,
+
+      currentLocation:
+        delivery.currentLocation,
+
+      routeStatus,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Check delivery route error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getDeliveryRouteProgress = async (
+  req,
+  res
+) => {
+  try {
+    // ----------------------------------------
+    // Find Delivery
+    // ----------------------------------------
+
+    const delivery =
+      await Delivery.findById(
+        req.params.id
+      );
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Verify Driver
+    // ----------------------------------------
+
+    if (
+      !delivery.driver ||
+      delivery.driver.toString() !==
+        req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This delivery is not assigned to you",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Delivery Must Be In Transit
+    // ----------------------------------------
+
+    if (
+      delivery.status !== "in_transit"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Route progress is only available for an in-transit delivery",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Current Location Required
+    // ----------------------------------------
+
+    if (
+      delivery.currentLocation?.latitude ===
+        null ||
+      delivery.currentLocation?.longitude ===
+        null
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Current driver location is unavailable",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Route Geometry Required
+    // ----------------------------------------
+
+    if (
+      !delivery.routeGeometry ||
+      !Array.isArray(
+        delivery.routeGeometry.coordinates
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Route geometry is unavailable",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Calculate Progress
+    // ----------------------------------------
+
+    const progress =
+      calculateRouteProgress(
+        delivery.currentLocation.latitude,
+        delivery.currentLocation.longitude,
+        delivery.routeGeometry,
+        delivery.distance
+      );
+
+
+    if (!progress) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Unable to calculate route progress",
+      });
+    }
+
+
+    // ----------------------------------------
+    // Estimated Time Remaining
+    // ----------------------------------------
+
+    let estimatedTimeRemaining = 0;
+
+    if (
+      delivery.distance > 0 &&
+      delivery.estimatedTime >= 0
+    ) {
+      estimatedTimeRemaining =
+        progress.distanceRemaining /
+        delivery.distance *
+        delivery.estimatedTime;
+    }
+
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+
+      deliveryId:
+        delivery._id,
+
+      currentLocation:
+        delivery.currentLocation,
+
+      progress: {
+        ...progress,
+
+        totalRouteDistance:
+          Number(
+            delivery.distance.toFixed(4)
+          ),
+
+        totalRouteDistanceMeters:
+          Number(
+            (
+              delivery.distance * 1000
+            ).toFixed(2)
+          ),
+
+        originalEstimatedTime:
+          Number(
+            delivery.estimatedTime.toFixed(2)
+          ),
+
+        estimatedTimeRemaining:
+          Number(
+            estimatedTimeRemaining.toFixed(2)
+          ),
+      },
+
+      status:
+        delivery.status,
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Get delivery route progress error:",
       error
     );
 

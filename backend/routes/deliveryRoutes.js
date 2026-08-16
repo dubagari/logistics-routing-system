@@ -16,6 +16,9 @@ import {
   cancelDelivery,
   getDriverDeliveries,
   getDeliveryStats,
+  getDeliveryNavigation,
+  checkDeliveryRoute,
+  getDeliveryRouteProgress,
 } from "../controllers/deliveryController.js";
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -108,6 +111,25 @@ router.put("/:id/cancel", protect, authorize("customer", "admin"), cancelDeliver
 // ========================================
 
 router.get("/admin/:id", protect, authorize("admin"), getAdminDeliveryById);
+
+
+// ========================================
+// Driver - Check Route Status
+// ========================================
+
+router.get(  "/:id/route-status",  protect,  authorize("driver"),  checkDeliveryRoute);
+
+// ========================================
+// Driver - Get Delivery Navigation
+// ========================================
+
+router.get(  "/:id/navigation",  protect,  authorize("driver"),  getDeliveryNavigation);
+
+// ========================================
+// Driver - Route Progress
+// ========================================
+
+router.get(  "/:id/route-progress",  protect,  authorize("driver"),  getDeliveryRouteProgress);
 
 // ========================================
 // Customer / Driver - Get Delivery
