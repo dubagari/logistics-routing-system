@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Delivery from "../models/Delivery.js";
 import Driver from "../models/Driver.js";
 import User from "../models/User.js";
@@ -222,7 +223,16 @@ export const getCustomerDeliveries = async (req, res) => {
 // Customer or Driver gets a delivery
 // ========================================
 export const getDeliveryById = async (req, res) => {
+
+
   try {
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid delivery ID",
+      });
+    }
     const delivery = await Delivery.findById(req.params.id)
         .populate("customer", "-password")
         .populate("driver", "-password");
@@ -1177,6 +1187,96 @@ export const cancelDelivery = async (req,res) => {
   } catch (error) {
     console.error(
       "Cancel delivery error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+// ========================================
+// Driver - Get Assigned Deliveries
+// ========================================
+
+export const getDriverDeliveries = async (req, res) => {
+  try {
+    const deliveries = await Delivery.find({
+      driver: req.user._id,
+    })
+      .populate("customer", "-password")
+      .populate("driver", "-password")
+      .sort({
+        createdAt: -1,
+      });
+
+    return res.json({
+      success: true,
+      count: deliveries.length,
+      deliveries,
+    });
+  } catch (error) {
+    console.error(
+      "Get driver deliveries error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ========================================
+// Admin - Delivery Statistics
+// ========================================
+
+export const getDeliveryStats = async (req, res) => {
+  try {
+    const [
+      total,
+      pending,
+      assigned,
+      accepted,
+      inTransit,
+      delivered,
+      cancelled,
+    ] = await Promise.all([
+      Delivery.countDocuments(),
+
+      Delivery.countDocuments({status: "pending",}),
+
+      Delivery.countDocuments({status: "assigned",}),
+
+      Delivery.countDocuments({status: "accepted",}),
+
+      Delivery.countDocuments({status: "in_transit",}),
+      
+      Delivery.countDocuments({status: "cancelled",}),
+      
+      Delivery.countDocuments({status: "delivered",}),
+
+    ]);
+
+    return res.json({
+      success: true,
+      stats: {
+        total,
+        pending,
+        assigned,
+        accepted,
+        in_transit: inTransit,
+        delivered,
+        cancelled,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Get delivery stats error:",
       error
     );
 
