@@ -123,6 +123,25 @@ const deliverySchema = new mongoose.Schema(
       default: 0,
     },
 
+
+    // ========================================
+// Route Geometry
+// ========================================
+
+routeGeometry: {
+  type: {
+    type: String,
+    enum: ["LineString"],
+    default: "LineString",
+  },
+
+  coordinates: {
+    type: [[Number]],
+    default: [],
+  },
+},
+
+
     // ========================================
     // Delivery Status
     // ========================================
@@ -141,6 +160,7 @@ const deliverySchema = new mongoose.Schema(
 
       default: "pending",
     },
+
 
     // ========================================
     // Delivery Timeline

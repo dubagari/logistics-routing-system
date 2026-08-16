@@ -331,19 +331,20 @@ export const createDelivery = async (req, res) => {
       });
     }
 
-    // ========================================
-    // Calculate Road Route
-    // ========================================
+  // ========================================
+// Calculate Road Route
+// ========================================
 
-    const route = await getRoadRoute(
-      pickupLatitude,
-      pickupLongitude,
-      deliveryLatitude,
-      deliveryLongitude
-    );
+const route = await getRoadRoute(
+  pickupLatitude,
+  pickupLongitude,
+  deliveryLatitude,
+  deliveryLongitude
+);
 
-    const distance = route.distance;
-    const estimatedTime = route.estimatedTime;
+const distance = route.distance;
+const estimatedTime = route.estimatedTime;
+const routeGeometry = route.geometry;
 
     // ========================================
     // Validate Package Weight
@@ -387,6 +388,8 @@ export const createDelivery = async (req, res) => {
       distance,
 
       estimatedTime,
+
+      routeGeometry,
     });
 
     // ========================================
