@@ -2,12 +2,15 @@ import mongoose from "mongoose";
 import Delivery from "../models/Delivery.js";
 import Driver from "../models/Driver.js";
 import User from "../models/User.js";
-
+import { calculateDistance } from "../utils/calculateDistance.js";
+import { calculateEstimatedTime } from "../utils/calculateEstimatedTime.js";
 // ========================================
 // Create Delivery
 // Customer creates a delivery
 // ========================================
 export const createDelivery = async (req, res) => {
+
+  
   try {
     const {
       pickupLocation,
@@ -119,6 +122,18 @@ export const createDelivery = async (req, res) => {
     }
 
     // ========================================
+// Calculate Distance
+// ========================================
+
+const distance = calculateDistance(
+  pickupLatitude,
+  pickupLongitude,
+  deliveryLatitude,
+  deliveryLongitude
+);
+
+const estimatedTime = calculateEstimatedTime(distance);
+    // ========================================
     // Validate Package Weight
     // ========================================
     const weight = Number(packageWeight || 0);
@@ -154,16 +169,18 @@ export const createDelivery = async (req, res) => {
       packageWeight: weight,
 
       notes: notes?.trim() || "",
+
+      distance,
+
+      estimatedTime
     });
 
     // ========================================
     // Populate Customer
     // ========================================
     const populatedDelivery =
-      await Delivery.findById(
-        delivery._id
-      ).populate(
-        "customer",
+      await Delivery.findById(delivery._id)
+      .populate(        "customer",
         "-password"
       );
 
