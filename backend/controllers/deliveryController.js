@@ -1098,3 +1098,91 @@ export const getAdminDeliveryById = async (req, res) => {
     });
   }
 };
+
+// ========================================
+// Cancel Delivery
+// ========================================
+
+export const cancelDelivery = async (req,res) => {
+  try {
+    // ----------------------------------------
+    // Find Delivery
+    // ----------------------------------------
+
+    const delivery = await Delivery.findById(req.params.id);
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+    // ----------------------------------------
+    // Customer Ownership Check
+    // ----------------------------------------
+
+    if (
+      req.user.role === "customer" &&
+      delivery.customer.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to cancel this delivery",
+      });
+    }
+
+    // ----------------------------------------
+    // Check Current Status
+    // ----------------------------------------
+
+    const cancellableStatuses = [
+      "pending",
+      "assigned",
+      "accepted",
+    ];
+
+    if (
+      !cancellableStatuses.includes(
+        delivery.status
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Delivery cannot be cancelled at this stage",
+      });
+    }
+
+    // ----------------------------------------
+    // Cancel Delivery
+    // ----------------------------------------
+
+    delivery.status = "cancelled";
+
+    delivery.cancelledAt =
+      new Date();
+
+    await delivery.save();
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+      message:
+        "Delivery cancelled successfully",
+      delivery,
+    });
+  } catch (error) {
+    console.error(
+      "Cancel delivery error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

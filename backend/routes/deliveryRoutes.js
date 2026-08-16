@@ -13,6 +13,7 @@ import {
   trackDelivery,
   getCustomerDeliveryHistory,
   getAdminDeliveryById,
+  cancelDelivery,
 } from "../controllers/deliveryController.js";
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -80,6 +81,13 @@ router.get("/:id/track", protect, authorize("customer"), trackDelivery);
 
 
 // ========================================
+// Cancel Delivery
+// ========================================
+
+router.put("/:id/cancel", protect, authorize("customer", "admin"), cancelDelivery);
+
+
+// ========================================
 // Customer / Driver - Get Delivery
 // ========================================
 router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
@@ -89,5 +97,7 @@ router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
 // ========================================
 
 router.get("/admin/:id", protect, authorize("admin"), getAdminDeliveryById);
+
+
 
 export default router;
