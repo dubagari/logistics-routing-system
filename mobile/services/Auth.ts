@@ -1,13 +1,13 @@
 export type UserRole =
-  | "admin"
+  | "customer"
   | "driver"
-  | "customer";
+  | "admin";
 
 export interface User {
   _id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone: string;
   role: UserRole;
   isActive: boolean;
 }

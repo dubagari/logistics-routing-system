@@ -13,7 +13,7 @@ const DeliveryDetails = () => {
 
   const delivery = useAppSelector((state) =>
     state.deliveries.deliveries.find(
-      (item) => item.id === id
+      (item) => item._id === id
     )
   );
 
@@ -52,7 +52,7 @@ const DeliveryDetails = () => {
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {delivery.orderNumber}
+            DEL-{delivery._id.slice(-6).toUpperCase()}
         </Text>
       </View>
 
@@ -74,11 +74,11 @@ const DeliveryDetails = () => {
         </Text>
 
         <Text className="mt-4 text-base font-semibold text-slate-800">
-          {delivery.customerName}
+          {delivery.customer.name}
         </Text>
 
         <Text className="mt-2 text-slate-500">
-          📞 {delivery.customerPhone}
+          📞 {delivery.customer.phone}
         </Text>
       </View>
 
@@ -94,7 +94,7 @@ const DeliveryDetails = () => {
           </Text>
 
           <Text className="mt-2 text-base text-slate-800">
-            📍 {delivery.pickupLocation}
+            📍 {delivery.pickupLocation.address}
           </Text>
         </View>
 
@@ -104,7 +104,7 @@ const DeliveryDetails = () => {
           </Text>
 
           <Text className="mt-2 text-base text-slate-800">
-            📍 {delivery.deliveryLocation}
+            📍 {delivery.deliveryLocation.address}  
           </Text>
         </View>
       </View>
@@ -145,7 +145,7 @@ const DeliveryDetails = () => {
     onPress={() => {
       dispatch(
         updateDeliveryStatus({
-          id: delivery.id,
+          id: delivery._id,
           status: "in_transit",
         })
       );
@@ -163,7 +163,7 @@ const DeliveryDetails = () => {
     onPress={() => {
       dispatch(
         updateDeliveryStatus({
-          id: delivery.id,
+          id: delivery._id,
           status: "delivered",
         })
       );

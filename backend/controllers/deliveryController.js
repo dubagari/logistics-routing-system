@@ -527,10 +527,7 @@ export const assignDriver = async (req, res) => {
 // Driver - Accept Delivery
 // ========================================
 
-export const acceptDelivery = async (
-  req,
-  res
-) => {
+export const acceptDelivery = async (req, res) => {
   try {
     // ----------------------------------------
     // Find Delivery
@@ -730,144 +727,7 @@ export const startDelivery = async (
 // Driver - Update Delivery Location
 // ========================================
 
-// export const updateDeliveryLocation = async (
-//   req,
-//   res
-// ) => {
-//   try {
-//     const {
-//       latitude,
-//       longitude,
-//     } = req.body;
 
-    
-
-
-//     // ----------------------------------------
-// // Validate Coordinates
-// // ----------------------------------------
-
-// if (
-//   latitude === undefined ||
-//   longitude === undefined
-// ) {
-//   return res.status(400).json({
-//     success: false,
-//     message: "Latitude and longitude are required",
-//   });
-// }
-
-// const parsedLatitude = Number(latitude);
-// const parsedLongitude = Number(longitude);
-
-// if (
-//   !Number.isFinite(parsedLatitude) ||
-//   !Number.isFinite(parsedLongitude)
-// ) {
-//   return res.status(400).json({
-//     success: false,
-//     message: "Latitude and longitude must be numbers",
-//   });
-// }
-
-// if (
-//   parsedLatitude < -90 ||
-//   parsedLatitude > 90 ||
-//   parsedLongitude < -180 ||
-//   parsedLongitude > 180
-// ) {
-//   return res.status(400).json({
-//     success: false,
-//     message: "Invalid GPS coordinates",
-//   });
-// }
-
-
-
-
-
-
-
-
-
-//     // ----------------------------------------
-//     // Find Delivery
-//     // ----------------------------------------
-
-//     const delivery =
-//       await Delivery.findById(
-//         req.params.id
-//       );
-
-//     if (!delivery) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Delivery not found",
-//       });
-//     }
-
-//     // ----------------------------------------
-//     // Verify Driver
-//     // ----------------------------------------
-
-//     if (
-//       !delivery.driver ||
-//       delivery.driver.toString() !==
-//         req.user._id.toString()
-//     ) {
-//       return res.status(403).json({
-//         success: false,
-//         message:
-//           "This delivery is not assigned to you",
-//       });
-//     }
-
-//     // ----------------------------------------
-//     // Delivery Must Be In Transit
-//     // ----------------------------------------
-
-//     if (
-//       delivery.status !== "in_transit"
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message:
-//           "GPS location can only be updated for an in-transit delivery",
-//       });
-//     }
-
-//     // ----------------------------------------
-//     // Update Location
-//     // ----------------------------------------
-
-// delivery.currentLocation = {
-//   latitude:parsedLatitude,
-//   longitude:parsedLongitude,
-//   updatedAt: new Date(),
-// };
-
-
-//     await delivery.save();
-
-//     return res.json({
-//       success: true,
-//       message:
-//         "Delivery location updated successfully",
-//       location:
-//         delivery.currentLocation,
-//     });
-//   } catch (error) {
-//     console.error(
-//       "Update delivery location error:",
-//       error
-//     );
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error",
-//     });
-//   }
-// };
 
 
 export const updateDeliveryLocation = async (

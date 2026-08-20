@@ -25,7 +25,7 @@ const Deliveries = () => {
       {/* Delivery List */}
       <FlatList
         data={deliveries}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
        
         showsVerticalScrollIndicator={false}
          contentContainerStyle={{
@@ -35,9 +35,9 @@ const Deliveries = () => {
           <Pressable
             onPress={() =>
               router.push({
-                pathname: "/(driver)/delivery-details",
+                pathname: "/(driver)/delivery/[id]",
                 params: {
-                  id: item.id,
+                  id: item._id,
                 },
               })
             }
@@ -46,7 +46,7 @@ const Deliveries = () => {
             {/* Order number */}
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-bold text-slate-900">
-                {item.orderNumber}
+                DEL-{item._id.slice(-6).toUpperCase()}
               </Text>
 
               {/* Status */}
@@ -77,11 +77,11 @@ const Deliveries = () => {
 
             {/* Customer */}
             <Text className="mt-4 text-base font-semibold text-slate-800">
-              {item.customerName}
+              {item.customer.name}
             </Text>
 
             <Text className="mt-1 text-sm text-slate-500">
-              📞 {item.customerPhone}
+              📞 {item.customer.phone}
             </Text>
 
             {/* Locations */}
@@ -91,7 +91,7 @@ const Deliveries = () => {
               </Text>
 
               <Text className="mt-1 text-slate-700">
-                📍 {item.pickupLocation}
+                📍 {item.pickupLocation.address}
               </Text>
 
               <Text className="mt-3 text-sm text-slate-400">
@@ -99,7 +99,7 @@ const Deliveries = () => {
               </Text>
 
               <Text className="mt-1 text-slate-700">
-                📍 {item.deliveryLocation}
+                📍 {item.deliveryLocation.address}
               </Text>
             </View>
 

@@ -3,29 +3,192 @@ import {
   View,
   Pressable,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
+
 import { useRouter } from "expo-router";
-import { useAppSelector } from "../../hooks/redux";
-import { useState } from "react";
+
+import { useEffect, useCallback } from "react";
+
+import { useAppSelector, useAppDispatch,} from "../../hooks/redux";
+
+import { fetchDriverDeliveries, updateDriverDeliveryLocation} from "../../store/slices/deliverySlice";
+
+import { useDriverLocation } from "../../hooks/useDriverLocation";
+
+import * as Location from "expo-location";
+
+
 
 const DriverDashboard = () => {
   const router = useRouter();
-  const [routeStarted, setRouteStarted] = useState(false);
 
-  const deliveries = useAppSelector(
-    (state) => state.deliveries.deliveries
-  );
+  const dispatch = useAppDispatch();
 
-  const totalDeliveries = deliveries.length;
+  const { token } = useAppSelector((state) => state.auth);
 
-  const pendingDeliveries = deliveries.filter(
-    (delivery) => delivery.status === "pending"
-  ).length;
+const {deliveries, loading,error,} = useAppSelector((state) => state.deliveries);
+
+const totalDeliveries = deliveries.length;
+
+  const activeDeliveries = deliveries.filter(
+  (delivery) =>
+    delivery.status === "pending" ||
+    delivery.status === "assigned" ||
+    delivery.status === "accepted" ||
+    delivery.status === "in_transit"
+).length;
 
   const completedDeliveries = deliveries.filter(
-    (delivery) => delivery.status === "delivered"
-  ).length;
+      (delivery) =>
+        delivery.status === "delivered"
+    ).length;
 
+
+  const activeDelivery = deliveries.find(
+  (delivery) =>
+    delivery.status === "accepted" ||
+    delivery.status === "in_transit"
+);
+
+
+console.log("ACTIVE DELIVERY:",  activeDelivery?._id,activeDelivery?.status);
+
+
+  useEffect(() => {
+    if (token) {
+      dispatch(
+        fetchDriverDeliveries(token)
+      );
+    }
+  }, [token, dispatch]);
+
+  useEffect(() => {
+
+    if (!token || !activeDelivery) return;
+    
+    // Only track when delivery has actually started
+    if (activeDelivery.status !== "in_transit") {
+      return;
+    }
+    console.log("GPS TRACKING DELIVERY:",  activeDelivery._id);
+    
+  let subscription: Location.LocationSubscription | null = null;
+
+  const startTracking = async () => {
+    try {
+      // Request permission
+      const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        console.log("GPS permission denied");
+        return;
+      }
+
+      console.log("GPS permission granted");
+
+      // Get initial location
+      const location =
+        await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+      console.log("INITIAL GPS:", location.coords);
+
+      dispatch(
+        updateDriverDeliveryLocation({
+          id: activeDelivery._id,
+          token,
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        })
+      );
+
+      // Continue watching location
+      subscription =
+        await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 10000,
+            distanceInterval: 10,
+          },
+          (location) => {
+            const {
+              latitude,
+              longitude,
+            } = location.coords;
+
+            console.log(
+              "LIVE GPS:",
+              latitude,
+              longitude
+            );
+
+            dispatch(
+              updateDriverDeliveryLocation({
+                id: activeDelivery._id,
+                token,
+                latitude,
+                longitude,
+              })
+            );
+          }
+        );
+    } catch (error) {
+      console.error(
+        "GPS TRACKING ERROR:",
+        error
+      );
+    }
+  };
+
+  startTracking();
+
+  return () => {
+    if (subscription) {
+      subscription.remove();
+      console.log("GPS tracking stopped");
+    }
+  };
+}, [
+  token,
+  activeDelivery?._id,
+  activeDelivery?.status,
+  dispatch,
+]);
+
+  
+
+  const handleLocationUpdate = useCallback(
+  (
+    deliveryId: string,
+    latitude: number,
+    longitude: number
+  ) => {
+    if (!token) {
+      return;
+    }
+
+    dispatch(
+      updateDriverDeliveryLocation({
+        id: deliveryId,
+        token,
+        latitude,
+        longitude,
+      })
+    );
+  },
+  [dispatch, token]
+);
+
+  useDriverLocation({
+  enabled: Boolean(activeDelivery),
+  deliveryId:activeDelivery?._id || null,
+  token,
+  onLocationUpdate:handleLocationUpdate,
+});
+  
   return (
     <View className="flex-1 bg-slate-100">
      
@@ -44,6 +207,18 @@ const DriverDashboard = () => {
           </Text>
         </View>
 
+{loading && (
+  <View className="items-center py-6">
+    <ActivityIndicator
+      size="large"
+      color="#1d4ed8"
+    />
+
+    <Text className="mt-2 text-slate-500">
+      Loading deliveries...
+    </Text>
+  </View>
+)}
         {/* Scrollable Content */}
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -70,11 +245,11 @@ const DriverDashboard = () => {
           {/* Pending */}
           <View className="flex-1 rounded-2xl bg-white p-4">
             <Text className="text-2xl font-bold text-orange-500">
-              {pendingDeliveries}
+              {activeDeliveries}
             </Text>
 
             <Text className="mt-1 text-sm text-slate-500">
-              Pending
+              Active
             </Text>
           </View>
 
@@ -103,102 +278,160 @@ const DriverDashboard = () => {
 
         {/* Current Location */}
         <View className="mx-5 mt-6 rounded-2xl bg-white p-5">
-          <Text className="text-lg font-bold text-slate-900">
-            📍 Current Location
-          </Text>
+          {/* {            activeDelivery?.currentLocation?.latitude != null &&
+activeDelivery?.currentLocation?.longitude != null ? (
+  <View className="mt-4 rounded-xl bg-green-50 p-4">
+    <Text className="font-semibold text-green-700">
+      GPS tracking active
+    </Text>
 
-          <View className="mt-4 h-40 items-center justify-center rounded-xl bg-slate-200">
-            <Text className="text-slate-500">
-              Map will appear here
-            </Text>
-          </View>
+    <Text className="mt-2 text-sm text-slate-600">
+      Latitude:{" "}
+      {activeDelivery.currentLocation.latitude.toFixed(6)}
+    </Text>
+
+    <Text className="mt-1 text-sm text-slate-600">
+      Longitude:{" "}
+      {activeDelivery.currentLocation.longitude.toFixed(6)}
+    </Text>
+
+    <Text className="mt-1 text-xs text-slate-400">
+      Updated:{" "}
+      {activeDelivery.currentLocation.updatedAt
+        ? new Date(
+            activeDelivery.currentLocation.updatedAt
+          ).toLocaleTimeString()
+        : "Unknown"}
+    </Text>
+  </View>
+) : (
+  <View className="mt-4 h-40 items-center justify-center rounded-xl bg-slate-200">
+    <Text className="text-slate-500">
+      Waiting for GPS location...
+    </Text>
+  </View>
+)} */}
+
+{activeDelivery?.currentLocation?.latitude != null &&
+ activeDelivery?.currentLocation?.longitude != null ? (
+  <View className="mt-4 rounded-xl bg-green-50 p-4">
+    <Text className="font-semibold text-green-700">
+      GPS tracking active
+    </Text>
+
+    <Text className="mt-2 text-sm text-slate-600">
+      Latitude:{" "}
+      {activeDelivery.currentLocation.latitude.toFixed(6)}
+    </Text>
+
+    <Text className="mt-1 text-sm text-slate-600">
+      Longitude:{" "}
+      {activeDelivery.currentLocation.longitude.toFixed(6)}
+    </Text>
+
+    <Text className="mt-1 text-xs text-slate-400">
+      Updated:{" "}
+      {activeDelivery.currentLocation.updatedAt
+        ? new Date(
+            activeDelivery.currentLocation.updatedAt
+          ).toLocaleTimeString()
+        : "Unknown"}
+    </Text>
+  </View>
+) : (
+  <View className="mt-4 h-40 items-center justify-center rounded-xl bg-slate-200">
+    <Text className="text-slate-500">
+      Waiting for GPS location...
+    </Text>
+  </View>
+)}
         </View>
 
         {/* Route */}
-        <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
-          <Text className="text-lg font-bold text-slate-900">
-            Today's Route
-          </Text>
+        {/* Current Delivery */}
+{deliveries.length > 0 && (
+  <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
 
-          <Text className="mt-3 text-slate-600">
-            Warehouse → Customer A → Customer B → Customer C
-          </Text>
+    <Text className="text-lg font-bold text-slate-900">
+      Current Delivery
+    </Text>
 
-          <View className="mt-4 flex-row justify-between">
-            <View>
-              <Text className="text-xs text-slate-400">
-                Distance
-              </Text>
+    <View className="mt-4">
+      <Text className="text-xs text-slate-400">
+        Pickup
+      </Text>
 
-              <Text className="font-semibold text-slate-800">
-                24.5 km
-              </Text>
-            </View>
+      <Text className="mt-1 font-semibold text-slate-800">
+        {deliveries[0].pickupLocation.address}
+      </Text>
+    </View>
 
-            <View>
-              <Text className="text-xs text-slate-400">
-                Estimated Time
-              </Text>
+    <View className="mt-4">
+      <Text className="text-xs text-slate-400">
+        Delivery
+      </Text>
 
-              <Text className="font-semibold text-slate-800">
-                42 min
-              </Text>
-            </View>
-          </View>
+      <Text className="mt-1 font-semibold text-slate-800">
+        {deliveries[0].deliveryLocation.address}
+      </Text>
+    </View>
 
-          {!routeStarted && (
-            <Pressable
-              onPress={() => setRouteStarted(true)}
-              className="mt-5 rounded-xl bg-blue-700 py-4"
-            >
-              <Text className="text-center font-bold text-white">
-                START ROUTE
-              </Text>
-            </Pressable>
-          )}
+    <View className="mt-4 flex-row justify-between">
 
-          {routeStarted && (
-            <>
-              <View className="mt-5 rounded-xl bg-green-50 p-4">
-                <Text className="font-bold text-green-700">
-                  ✓ Route started
-                </Text>
+      <View>
+        <Text className="text-xs text-slate-400">
+          Distance
+        </Text>
 
-                <Text className="mt-1 text-sm text-green-600">
-                  Follow your delivery stops in order.
-                </Text>
-              </View>
+        <Text className="font-semibold text-slate-800">
+          {deliveries[0].distance.toFixed(2)} km
+        </Text>
+      </View>
 
-              <Pressable
-                onPress={() => router.push("/(driver)/route")}
-                className="mt-4 rounded-xl bg-blue-700 py-4"
-              >
-                <Text className="text-center font-bold text-white">
-                  VIEW ROUTE
-                </Text>
-              </Pressable>
-            </>
-          )}
-        </View>
+      <View>
+        <Text className="text-xs text-slate-400">
+          Estimated Time
+        </Text>
 
-        <Pressable
-  onPress={() => router.push("/(customer)")}
-  className="rounded-xl bg-blue-700 py-4"
+        <Text className="font-semibold text-slate-800">
+          {deliveries[0].estimatedTime.toFixed(0)} min
+        </Text>
+      </View>
+
+    </View>
+
+    <View className="mt-4 rounded-xl bg-orange-50 p-4">
+      <Text className="font-bold text-orange-700">
+        Status: {deliveries[0].status.toUpperCase()}
+      </Text>
+    </View>
+
+    <Pressable
+   onPress={() =>
+              router.push({
+                pathname: "/(driver)/delivery/[id]",
+                params: {
+                  id: deliveries[0]._id,
+                },
+              })
+            }
+  className="mt-5 rounded-xl bg-blue-700 py-4"
 >
   <Text className="text-center font-bold text-white">
-    CUSTOMER DASHBOARD
+    VIEW DELIVERY
   </Text>
 </Pressable>
 
-<Pressable
-  onPress={() => router.push("/(admin)")}
-  className="mx-5 mt-5 rounded-xl bg-purple-700 py-4"
->
-  <Text className="text-center font-bold text-white">
-    TEST ADMIN DASHBOARD
-  </Text>
-</Pressable>
-
+  </View>
+)}
+{error && (
+  <View className="mx-5 mt-5 rounded-xl bg-red-50 p-4">
+    <Text className="font-semibold text-red-700">
+      {error}
+    </Text>
+  </View>
+)}
+  
       </ScrollView>
     </View>
   );

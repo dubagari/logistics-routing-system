@@ -37,16 +37,10 @@ export const register = async (req, res) => {
     // Validate required fields
     // ----------------------------------------
 
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !password
-    ) {
+    if (!name || !email || !phone || !password) {
       return res.status(400).json({
         success: false,
-        message:
-          "Name, email, phone and password are required",
+        message: "Name, email, phone and password are required",
       });
     }
 
@@ -57,8 +51,7 @@ export const register = async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message:
-          "Password must be at least 6 characters",
+        message: "Password must be at least 6 characters",
       });
     }
 
@@ -66,16 +59,12 @@ export const register = async (req, res) => {
     // Check existing user
     // ----------------------------------------
 
-    const existingUser =
-      await User.findOne({
-        email: email.toLowerCase(),
-      });
+    const existingUser = await User.findOne({email: email.toLowerCase(),});
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message:
-          "User with this email already exists",
+        message: "User with this email already exists",
       });
     }
 
@@ -83,11 +72,7 @@ export const register = async (req, res) => {
     // Validate role
     // ----------------------------------------
 
-    const allowedRoles = [
-      "customer",
-      "driver",
-      "admin",
-    ];
+    const allowedRoles = [ "customer","driver","admin",];
 
     const selectedRole =
       role || "customer";

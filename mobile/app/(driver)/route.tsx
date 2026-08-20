@@ -50,7 +50,7 @@ const DriverRoute = () => {
 
       <FlatList
         data={deliveries}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: 120,
@@ -161,11 +161,11 @@ const DriverRoute = () => {
               {/* Customer */}
               <View className="ml-4 flex-1">
                 <Text className="font-bold text-slate-900">
-                  {item.customerName}
+                  {item.customer.name}
                 </Text>
 
                 <Text className="mt-1 text-sm text-slate-500">
-                  {item.deliveryLocation}
+                  {item.customer.phone}
                 </Text>
               </View>
 
@@ -190,7 +190,7 @@ const DriverRoute = () => {
             <View className="mt-4 flex-row justify-between border-t border-slate-100 pt-3">
 
               <Text className="flex-1 text-sm text-slate-500">
-                📍 {item.pickupLocation}
+                📍 {item.pickupLocation.address}
               </Text>
 
               <Text className="text-sm font-semibold text-slate-700">
@@ -213,7 +213,7 @@ const DriverRoute = () => {
               router.push({
                 pathname: "/(driver)/delivery-details",
                 params: {
-                  id: nextDelivery.id,
+                  id: nextDelivery._id,
                 },
               });
             }}

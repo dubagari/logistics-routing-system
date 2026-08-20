@@ -68,6 +68,13 @@ const DriverLayout = () => {
           href: null,
         }}
       />
+
+      <Tabs.Screen
+        name="delivery"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 };
