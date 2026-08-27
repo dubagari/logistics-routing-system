@@ -1,5 +1,3 @@
-
-
 import { apiRequest } from "./api";
 import { Delivery } from "../types/Delivery";
 
@@ -42,12 +40,15 @@ interface DeliveryLocationResponse {
 export const getDriverDeliveries = async (
   token: string
 ): Promise<DriverDeliveriesResponse> => {
-  const response = await apiRequest("/deliveries/driver", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await apiRequest(
+    "/deliveries/driver",
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response;
 };
@@ -60,12 +61,15 @@ export const acceptDelivery = async (
   id: string,
   token: string
 ): Promise<DeliveryActionResponse> => {
-  const response = await apiRequest(`/deliveries/${id}/accept`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await apiRequest(
+    `/deliveries/${id}/accept`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response;
 };
@@ -78,12 +82,67 @@ export const startDelivery = async (
   id: string,
   token: string
 ): Promise<DeliveryActionResponse> => {
-  const response = await apiRequest(`/deliveries/${id}/start`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await apiRequest(
+    `/deliveries/${id}/start`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response;
+};
+
+// ============================================
+// SELECT DELIVERY ROUTE
+// ============================================
+
+// export const selectDeliveryRoute = async (
+//   id: string,
+//   token: string,
+//   routeId: string
+// ): Promise<DeliveryActionResponse> => {
+//   const response = await apiRequest(
+//     `/deliveries/${id}/route`,
+//     {
+//       method: "PUT",
+
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//         "Content-Type": "application/json",
+//       },
+
+//       body: JSON.stringify({
+//         routeId,
+//       }),
+//     }
+//   );
+
+//   return response;
+// };
+
+export const selectDeliveryRoute = async (
+  id: string,
+  token: string,
+  routeId: string
+): Promise<DeliveryActionResponse> => {
+  const response = await apiRequest(
+  `/deliveries/${id}/route`,
+    {
+      method: "PUT",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        routeId,
+      }),
+    }
+  );
 
   return response;
 };
@@ -98,17 +157,20 @@ export const updateDeliveryLocation = async (
   latitude: number,
   longitude: number
 ): Promise<DeliveryLocationResponse> => {
-  const response = await apiRequest(`/deliveries/${id}/location`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      latitude,
-      longitude,
-    }),
-  });
+  const response = await apiRequest(
+    `/deliveries/${id}/location`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        latitude,
+        longitude,
+      }),
+    }
+  );
 
   return response;
 };
@@ -121,12 +183,15 @@ export const completeDelivery = async (
   id: string,
   token: string
 ): Promise<DeliveryActionResponse> => {
-  const response = await apiRequest(`/deliveries/${id}/complete`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await apiRequest(
+    `/deliveries/${id}/complete`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response;
 };

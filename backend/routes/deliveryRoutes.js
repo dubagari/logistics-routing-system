@@ -19,7 +19,10 @@ import {
   getDeliveryNavigation,
   checkDeliveryRoute,
   getDeliveryRouteProgress,
+  selectDeliveryRoute,
 } from "../controllers/deliveryController.js";
+
+
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
@@ -114,9 +117,15 @@ router.get("/admin/:id", protect, authorize("admin"), getAdminDeliveryById);
 
 
 // ========================================
+// Driver - Select Route
+// ========================================
+router  .put( "/:id/route",  protect,  authorize("driver"),  selectDeliveryRoute);
+
+router.put( "/:id/select-route", protect,  selectDeliveryRoute);
+
+// ========================================
 // Driver - Check Route Status
 // ========================================
-
 router.get(  "/:id/route-status",  protect,  authorize("driver"),  checkDeliveryRoute);
 
 // ========================================
@@ -135,6 +144,7 @@ router.get(  "/:id/route-progress",  protect,  authorize("driver"),  getDelivery
 // Customer / Driver - Get Delivery
 // ========================================
 router.get("/:id", protect, authorize("customer", "driver"), getDeliveryById);
+
 
 
 

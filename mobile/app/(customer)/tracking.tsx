@@ -9,7 +9,7 @@ const CustomerTracking = () => {
 
   const order = useAppSelector((state) =>
     state.deliveries.deliveries.find(
-      (item) => item.id === id
+      (item) => item._id === id
     )
   );
 
@@ -54,7 +54,7 @@ const CustomerTracking = () => {
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {order.orderNumber}
+          {order._id}
         </Text>
 
       </View>
@@ -149,7 +149,7 @@ const CustomerTracking = () => {
               </Text>
 
               <Text className="mt-1 text-base text-slate-800">
-                {order.pickupLocation}
+                {order.pickupLocation.address}
               </Text>
 
             </View>
@@ -178,7 +178,7 @@ const CustomerTracking = () => {
               </Text>
 
               <Text className="mt-1 text-base text-slate-800">
-                {order.deliveryLocation}
+                {order.deliveryLocation.address}
               </Text>
 
             </View>

@@ -16,7 +16,8 @@ import {
   startDelivery,
   updateDeliveryLocation,
   completeDelivery,
-} from "../../services/deliveryService";
+  selectDeliveryRoute,
+  } from "../../services/deliveryService";
 
 // ============================================
 // STATE
@@ -29,6 +30,7 @@ interface DeliveryState {
   error: string | null;
 
   accepting: boolean;
+  selectingRoute: boolean;
   starting: boolean;
   completing: boolean;
   updatingLocation: boolean;
@@ -41,11 +43,11 @@ const initialState: DeliveryState = {
   error: null,
 
   accepting: false,
+  selectingRoute: false,
   starting: false,
   completing: false,
   updatingLocation: false,
 };
-
 // ============================================
 // GET DRIVER DELIVERIES
 // ============================================
@@ -112,6 +114,47 @@ export const acceptDriverDelivery =
     }
   );
 
+
+  // ============================================
+// SELECT DELIVERY ROUTE
+// ============================================
+
+export const selectDriverDeliveryRoute =
+  createAsyncThunk<
+    Delivery,
+    {
+      id: string;
+      token: string;
+      routeId: string;
+    },
+    { rejectValue: string }
+  >(
+    "deliveries/selectDriverDeliveryRoute",
+
+    
+
+    async (
+      { id, token, routeId },
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await selectDeliveryRoute(
+            id,
+            token,
+            routeId
+          );
+
+        return response.delivery;
+      } catch (error: any) {
+        return rejectWithValue(
+          error.message ||
+            "Failed to select delivery route"
+        );
+      }
+    }
+  );
+
 // ============================================
 // START DELIVERY
 // ============================================
@@ -146,7 +189,6 @@ export const startDriverDelivery =
       }
     }
   );
-
 // ============================================
 // UPDATE DELIVERY LOCATION
 // ============================================
@@ -368,6 +410,50 @@ const deliverySlice = createSlice({
         }
       );
 
+      // ========================================
+// SELECT ROUTE
+// ========================================
+
+builder
+
+  .addCase(
+    selectDriverDeliveryRoute.pending,
+    (state) => {
+      state.selectingRoute = true;
+      state.error = null;
+    }
+  )
+
+  .addCase(
+    selectDriverDeliveryRoute.fulfilled,
+    (state, action) => {
+      state.selectingRoute = false;
+
+      const index =
+        state.deliveries.findIndex(
+          (delivery) =>
+            delivery._id ===
+            action.payload._id
+        );
+
+      if (index !== -1) {
+        state.deliveries[index] =
+          action.payload;
+      }
+    }
+  )
+
+  .addCase(
+    selectDriverDeliveryRoute.rejected,
+    (state, action) => {
+      state.selectingRoute = false;
+
+      state.error =
+        action.payload ||
+        "Failed to select delivery route";
+    }
+  );
+
     // ========================================
     // START
     // ========================================
@@ -411,6 +497,8 @@ const deliverySlice = createSlice({
             "Failed to start delivery";
         }
       );
+
+
 
     // ========================================
     // LOCATION

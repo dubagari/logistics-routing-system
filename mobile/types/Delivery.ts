@@ -1,3 +1,7 @@
+// ============================================
+// DELIVERY STATUS
+// ============================================
+
 export type DeliveryStatus =
   | "pending"
   | "assigned"
@@ -6,11 +10,19 @@ export type DeliveryStatus =
   | "delivered"
   | "cancelled";
 
+// ============================================
+// LOCATION
+// ============================================
+
 export interface Location {
   address: string;
   latitude: number;
   longitude: number;
 }
+
+// ============================================
+// CURRENT LOCATION
+// ============================================
 
 export interface CurrentLocation {
   latitude: number | null;
@@ -18,67 +30,112 @@ export interface CurrentLocation {
   updatedAt: string | null;
 }
 
+// ============================================
+// ROUTE GEOMETRY
+// ============================================
+
 export interface RouteGeometry {
   type: "LineString";
   coordinates: number[][];
 }
 
+// ============================================
+// DELIVERY ROUTE
+// ============================================
+
+export interface DeliveryRoute {
+  id: string;
+  distance: number;
+  estimatedTime: number;
+  geometry: RouteGeometry;
+}
+
+// ============================================
+// CUSTOMER
+// ============================================
+
 export interface Customer {
   _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: "customer";
-  isActive: boolean;
+  fullName?: string;
+  email?: string;
+  phone?: string;
 }
+
+// ============================================
+// DRIVER
+// ============================================
 
 export interface Driver {
   _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: "driver";
-  isActive: boolean;
+  fullName?: string;
+  email?: string;
+  phone?: string;
 }
+
+// ============================================
+// DELIVERY
+// ============================================
 
 export interface Delivery {
   _id: string;
 
-  customer: Customer;
+  customer: Customer | string;
 
-  driver: Driver | null;
+  driver: Driver | string | null;
 
+  // Locations
   pickupLocation: Location;
-
   deliveryLocation: Location;
 
+  // Driver location
   currentLocation: CurrentLocation;
 
-  routeGeometry: RouteGeometry;
-
+  // Package
   packageDescription: string;
-
   packageWeight: number;
-
   notes: string;
 
-  distance: number;
+  // ==========================================
+  // CALCULATED ROUTES
+  // ==========================================
 
+  routes: DeliveryRoute[];
+
+  // ==========================================
+  // SELECTED ROUTE
+  // ==========================================
+
+  selectedRoute: string | null;
+
+  selectedRouteAt: string | null;
+
+  // ==========================================
+  // SELECTED ROUTE INFORMATION
+  // ==========================================
+
+  distance: number;
   estimatedTime: number;
+
+  // ==========================================
+  // STATUS
+  // ==========================================
 
   status: DeliveryStatus;
 
+  // ==========================================
+  // TIMELINE
+  // ==========================================
+
   assignedAt: string | null;
-
   acceptedAt: string | null;
-
   startedAt: string | null;
-
   deliveredAt: string | null;
-
   cancelledAt: string | null;
 
-  createdAt: string;
+  // ==========================================
+  // TIMESTAMPS
+  // ==========================================
 
+  createdAt: string;
   updatedAt: string;
 }

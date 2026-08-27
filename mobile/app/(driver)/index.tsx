@@ -1,238 +1,147 @@
 import {
-  Text,
   View,
+  Text,
   Pressable,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
 
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 
-import { useEffect, useCallback } from "react";
+import {
+  useAppSelector,
+  useAppDispatch,
+} from "../../hooks/redux";
 
-import { useAppSelector, useAppDispatch,} from "../../hooks/redux";
+import {
+  fetchDriverDeliveries,
+} from "../../store/slices/deliverySlice";
 
-import { fetchDriverDeliveries, updateDriverDeliveryLocation} from "../../store/slices/deliverySlice";
-
-import { useDriverLocation } from "../../hooks/useDriverLocation";
-
-import * as Location from "expo-location";
-
-
-
-const DriverDashboard = () => {
+const DriverHome = () => {
   const router = useRouter();
 
   const dispatch = useAppDispatch();
 
-  const { token } = useAppSelector((state) => state.auth);
+  const { token } = useAppSelector(
+    (state) => state.auth
+  );
 
-const {deliveries, loading,error,} = useAppSelector((state) => state.deliveries);
+  const {
+    deliveries,
+    loading,
+    error,
+  } = useAppSelector(
+    (state) => state.deliveries
+  );
 
-const totalDeliveries = deliveries.length;
+  // ============================================
+  // FETCH DRIVER DELIVERIES
+  // ============================================
 
-  const activeDeliveries = deliveries.filter(
-  (delivery) =>
-    delivery.status === "pending" ||
-    delivery.status === "assigned" ||
-    delivery.status === "accepted" ||
-    delivery.status === "in_transit"
-).length;
+  useEffect(() => {
+    if (!token) return;
 
-  const completedDeliveries = deliveries.filter(
+    dispatch(
+      fetchDriverDeliveries(token)
+    );
+  }, [token, dispatch]);
+
+  // ============================================
+  // STATISTICS
+  // ============================================
+
+  const totalDeliveries =
+    deliveries.length;
+
+  const assignedDeliveries =
+    deliveries.filter(
+      (delivery) =>
+        delivery.status === "assigned"
+    ).length;
+
+  const activeDeliveries =
+    deliveries.filter(
+      (delivery) =>
+        delivery.status === "accepted" ||
+        delivery.status === "in_transit"
+    ).length;
+
+  const activeDelivery =
+    deliveries.find(
+      (delivery) =>
+        delivery.status === "accepted" ||
+        delivery.status === "in_transit"
+    );  
+
+  const completedDeliveries =
+    deliveries.filter(
       (delivery) =>
         delivery.status === "delivered"
     ).length;
 
+  // ============================================
+  // LOADING
+  // ============================================
 
-  const activeDelivery = deliveries.find(
-  (delivery) =>
-    delivery.status === "accepted" ||
-    delivery.status === "in_transit"
-);
+  if (loading && deliveries.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-100">
 
+        <ActivityIndicator
+          size="large"
+          color="#1d4ed8"
+        />
 
-console.log("ACTIVE DELIVERY:",  activeDelivery?._id,activeDelivery?.status);
+        <Text className="mt-3 text-slate-500">
+          Loading dashboard...
+        </Text>
 
-
-  useEffect(() => {
-    if (token) {
-      dispatch(
-        fetchDriverDeliveries(token)
-      );
-    }
-  }, [token, dispatch]);
-
-  useEffect(() => {
-
-    if (!token || !activeDelivery) return;
-    
-    // Only track when delivery has actually started
-    if (activeDelivery.status !== "in_transit") {
-      return;
-    }
-    console.log("GPS TRACKING DELIVERY:",  activeDelivery._id);
-    
-  let subscription: Location.LocationSubscription | null = null;
-
-  const startTracking = async () => {
-    try {
-      // Request permission
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        console.log("GPS permission denied");
-        return;
-      }
-
-      console.log("GPS permission granted");
-
-      // Get initial location
-      const location =
-        await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-
-      console.log("INITIAL GPS:", location.coords);
-
-      dispatch(
-        updateDriverDeliveryLocation({
-          id: activeDelivery._id,
-          token,
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        })
-      );
-
-      // Continue watching location
-      subscription =
-        await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 10000,
-            distanceInterval: 10,
-          },
-          (location) => {
-            const {
-              latitude,
-              longitude,
-            } = location.coords;
-
-            console.log(
-              "LIVE GPS:",
-              latitude,
-              longitude
-            );
-
-            dispatch(
-              updateDriverDeliveryLocation({
-                id: activeDelivery._id,
-                token,
-                latitude,
-                longitude,
-              })
-            );
-          }
-        );
-    } catch (error) {
-      console.error(
-        "GPS TRACKING ERROR:",
-        error
-      );
-    }
-  };
-
-  startTracking();
-
-  return () => {
-    if (subscription) {
-      subscription.remove();
-      console.log("GPS tracking stopped");
-    }
-  };
-}, [
-  token,
-  activeDelivery?._id,
-  activeDelivery?.status,
-  dispatch,
-]);
-
-  
-
-  const handleLocationUpdate = useCallback(
-  (
-    deliveryId: string,
-    latitude: number,
-    longitude: number
-  ) => {
-    if (!token) {
-      return;
-    }
-
-    dispatch(
-      updateDriverDeliveryLocation({
-        id: deliveryId,
-        token,
-        latitude,
-        longitude,
-      })
+      </View>
     );
-  },
-  [dispatch, token]
-);
+  }
 
-  useDriverLocation({
-  enabled: Boolean(activeDelivery),
-  deliveryId:activeDelivery?._id || null,
-  token,
-  onLocationUpdate:handleLocationUpdate,
-});
-  
+  // ============================================
+  // DASHBOARD
+  // ============================================
+
   return (
     <View className="flex-1 bg-slate-100">
-     
-        {/* Header */}
-        <View className="bg-blue-700 px-5 pb-10 pt-14">
-          <Text className="text-2xl font-bold text-white">
-            Good morning 👋
-          </Text>
 
-          <Text className="mt-1 text-2xl font-bold text-white">
-            Driver Dashboard
-          </Text>
+      {/* ====================================== */}
+      {/* HEADER */}
+      {/* ====================================== */}
 
-          <Text className="mt-1 text-blue-100">
-            Ready for today's deliveries?
-          </Text>
-        </View>
+      <View className="bg-blue-700 px-5 pb-10 pt-14">
 
-{loading && (
-  <View className="items-center py-6">
-    <ActivityIndicator
-      size="large"
-      color="#1d4ed8"
-    />
+        <Text className="text-2xl font-bold text-white">
+          Driver Dashboard
+        </Text>
 
-    <Text className="mt-2 text-slate-500">
-      Loading deliveries...
-    </Text>
-  </View>
-)}
-        {/* Scrollable Content */}
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingTop: 20,
-        paddingBottom: 120,
-      }}
-    >
+        <Text className="mt-1 text-blue-100">
+          Welcome back, Driver 👋
+        </Text>
 
-        {/* Statistics */}
-        <View className="-mt-5 mx-5 flex-row gap-3">
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: 20,
+          paddingBottom: 120,
+        }}
+      >
+
+        {/* ====================================== */}
+        {/* STATISTICS */}
+        {/* ====================================== */}
+
+        <View className="mx-5 flex-row gap-3">
 
           {/* Total */}
+
           <View className="flex-1 rounded-2xl bg-white p-4">
+
             <Text className="text-2xl font-bold text-slate-900">
               {totalDeliveries}
             </Text>
@@ -240,201 +149,140 @@ console.log("ACTIVE DELIVERY:",  activeDelivery?._id,activeDelivery?.status);
             <Text className="mt-1 text-sm text-slate-500">
               Total
             </Text>
+
           </View>
 
-          {/* Pending */}
+          {/* Assigned */}
+
           <View className="flex-1 rounded-2xl bg-white p-4">
+
             <Text className="text-2xl font-bold text-orange-500">
+              {assignedDeliveries}
+            </Text>
+
+            <Text className="mt-1 text-sm text-slate-500">
+              Assigned
+            </Text>
+
+          </View>
+
+        </View>
+
+        <View className="mx-5 mt-3 flex-row gap-3">
+
+          {/* Active */}
+
+          <View className="flex-1 rounded-2xl bg-white p-4">
+
+            <Text className="text-2xl font-bold text-blue-600">
               {activeDeliveries}
             </Text>
 
             <Text className="mt-1 text-sm text-slate-500">
               Active
             </Text>
+
           </View>
 
-          {/* Done */}
+          {/* Completed */}
+
           <View className="flex-1 rounded-2xl bg-white p-4">
+
             <Text className="text-2xl font-bold text-green-600">
               {completedDeliveries}
             </Text>
 
             <Text className="mt-1 text-sm text-slate-500">
-              Done
+              Completed
             </Text>
+
           </View>
 
         </View>
 
-        {/* View All Deliveries */}
-        <Pressable
-          onPress={() => router.push("/(driver)/deliveries")}
-          className="mx-5 mt-5 rounded-xl bg-blue-700 py-4"
-        >
-          <Text className="text-center font-bold text-white">
-            VIEW ALL DELIVERIES
-          </Text>
-        </Pressable>
+        {/* ====================================== */}
+        {/* ERROR */}
+        {/* ====================================== */}
 
-        {/* Current Location */}
-        <View className="mx-5 mt-6 rounded-2xl bg-white p-5">
-          {/* {            activeDelivery?.currentLocation?.latitude != null &&
-activeDelivery?.currentLocation?.longitude != null ? (
-  <View className="mt-4 rounded-xl bg-green-50 p-4">
-    <Text className="font-semibold text-green-700">
-      GPS tracking active
-    </Text>
+        {error && (
+          <View className="mx-5 mt-5 rounded-xl bg-red-50 p-4">
 
-    <Text className="mt-2 text-sm text-slate-600">
-      Latitude:{" "}
-      {activeDelivery.currentLocation.latitude.toFixed(6)}
-    </Text>
+            <Text className="font-semibold text-red-700">
+              {error}
+            </Text>
 
-    <Text className="mt-1 text-sm text-slate-600">
-      Longitude:{" "}
-      {activeDelivery.currentLocation.longitude.toFixed(6)}
-    </Text>
+          </View>
+        )}
 
-    <Text className="mt-1 text-xs text-slate-400">
-      Updated:{" "}
-      {activeDelivery.currentLocation.updatedAt
-        ? new Date(
-            activeDelivery.currentLocation.updatedAt
-          ).toLocaleTimeString()
-        : "Unknown"}
-    </Text>
-  </View>
-) : (
-  <View className="mt-4 h-40 items-center justify-center rounded-xl bg-slate-200">
-    <Text className="text-slate-500">
-      Waiting for GPS location...
-    </Text>
-  </View>
-)} */}
+        {/* ====================================== */}
+        {/* MY DELIVERIES */}
+        {/* ====================================== */}
 
-{activeDelivery?.currentLocation?.latitude != null &&
- activeDelivery?.currentLocation?.longitude != null ? (
-  <View className="mt-4 rounded-xl bg-green-50 p-4">
-    <Text className="font-semibold text-green-700">
-      GPS tracking active
-    </Text>
+        <View className="mx-5 mt-8">
 
-    <Text className="mt-2 text-sm text-slate-600">
-      Latitude:{" "}
-      {activeDelivery.currentLocation.latitude.toFixed(6)}
-    </Text>
+          <Pressable
+            onPress={() =>
+              router.push(
+                "/(driver)/deliveries"
+              )
+            }
+            className="rounded-2xl bg-blue-700 py-5"
+          >
 
-    <Text className="mt-1 text-sm text-slate-600">
-      Longitude:{" "}
-      {activeDelivery.currentLocation.longitude.toFixed(6)}
-    </Text>
+            <Text className="text-center text-lg font-bold text-white">
+              📦 MY DELIVERIES
+            </Text>
 
-    <Text className="mt-1 text-xs text-slate-400">
-      Updated:{" "}
-      {activeDelivery.currentLocation.updatedAt
-        ? new Date(
-            activeDelivery.currentLocation.updatedAt
-          ).toLocaleTimeString()
-        : "Unknown"}
-    </Text>
-  </View>
-) : (
-  <View className="mt-4 h-40 items-center justify-center rounded-xl bg-slate-200">
-    <Text className="text-slate-500">
-      Waiting for GPS location...
-    </Text>
-  </View>
-)}
+            <Text className="mt-1 text-center text-blue-100">
+              View and manage your deliveries
+            </Text>
+
+          </Pressable>
+
         </View>
 
-        {/* Route */}
-        {/* Current Delivery */}
-{deliveries.length > 0 && (
-  <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
+        {/* ====================================== */}
+        {/* ACTIVE DELIVERY */}
+        {/* ====================================== */}
 
-    <Text className="text-lg font-bold text-slate-900">
-      Current Delivery
+        {activeDeliveries > 0 && (
+
+          <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
+
+            <Text className="text-lg font-bold text-slate-900">
+              Active Delivery
+            </Text>
+
+            <Text className="mt-2 text-slate-500">
+              You currently have an active delivery.
+            </Text>
+
+            {activeDelivery && (
+  <Pressable
+    onPress={() =>
+      router.push({
+        pathname: "/(driver)/delivery/[id]",
+        params: {
+          id: activeDelivery._id,
+        },
+      })
+    }
+    className="mt-4 rounded-xl bg-green-600 py-4"
+  >
+    <Text className="text-center font-bold text-white">
+      VIEW ACTIVE DELIVERY
     </Text>
-
-    <View className="mt-4">
-      <Text className="text-xs text-slate-400">
-        Pickup
-      </Text>
-
-      <Text className="mt-1 font-semibold text-slate-800">
-        {deliveries[0].pickupLocation.address}
-      </Text>
-    </View>
-
-    <View className="mt-4">
-      <Text className="text-xs text-slate-400">
-        Delivery
-      </Text>
-
-      <Text className="mt-1 font-semibold text-slate-800">
-        {deliveries[0].deliveryLocation.address}
-      </Text>
-    </View>
-
-    <View className="mt-4 flex-row justify-between">
-
-      <View>
-        <Text className="text-xs text-slate-400">
-          Distance
-        </Text>
-
-        <Text className="font-semibold text-slate-800">
-          {deliveries[0].distance.toFixed(2)} km
-        </Text>
-      </View>
-
-      <View>
-        <Text className="text-xs text-slate-400">
-          Estimated Time
-        </Text>
-
-        <Text className="font-semibold text-slate-800">
-          {deliveries[0].estimatedTime.toFixed(0)} min
-        </Text>
-      </View>
-
-    </View>
-
-    <View className="mt-4 rounded-xl bg-orange-50 p-4">
-      <Text className="font-bold text-orange-700">
-        Status: {deliveries[0].status.toUpperCase()}
-      </Text>
-    </View>
-
-    <Pressable
-   onPress={() =>
-              router.push({
-                pathname: "/(driver)/delivery/[id]",
-                params: {
-                  id: deliveries[0]._id,
-                },
-              })
-            }
-  className="mt-5 rounded-xl bg-blue-700 py-4"
->
-  <Text className="text-center font-bold text-white">
-    VIEW DELIVERY
-  </Text>
-</Pressable>
-
-  </View>
+  </Pressable>
 )}
-{error && (
-  <View className="mx-5 mt-5 rounded-xl bg-red-50 p-4">
-    <Text className="font-semibold text-red-700">
-      {error}
-    </Text>
-  </View>
-)}
-  
+
+          </View>
+
+        )}
+
       </ScrollView>
+
     </View>
   );
 };
 
-export default DriverDashboard;
+export default DriverHome;

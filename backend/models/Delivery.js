@@ -110,7 +110,75 @@ const deliverySchema = new mongoose.Schema(
     },
 
     // ========================================
-    // Delivery Information
+// Delivery Method
+// ========================================
+
+deliveryMethod: {
+  type: String,
+
+  enum: [
+    "motorcycle",
+    "car",
+    "bicycle",
+    "walking",
+  ],
+
+  default: null,
+},
+
+    // ========================================
+    // CALCULATED ROUTES
+    // Driver chooses one
+    // ========================================
+
+    routes: [
+      {
+        id: {
+          type: String,
+          required: true,
+        },
+
+        distance: {
+          type: Number,
+          required: true,
+        },
+
+        estimatedTime: {
+          type: Number,
+          required: true,
+        },
+
+        geometry: {
+          type: {
+            type: String,
+            enum: ["LineString"],
+            default: "LineString",
+          },
+
+          coordinates: {
+            type: [[Number]],
+            default: [],
+          },
+        },
+      },
+    ],
+
+    // ========================================
+    // SELECTED ROUTE
+    // ========================================
+
+    selectedRoute: {
+      type: String,
+      default: null,
+    },
+
+    selectedRouteAt: {
+      type: Date,
+      default: null,
+    },
+
+    // ========================================
+    // SELECTED ROUTE INFORMATION
     // ========================================
 
     distance: {
@@ -122,25 +190,6 @@ const deliverySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
-
-    // ========================================
-// Route Geometry
-// ========================================
-
-routeGeometry: {
-  type: {
-    type: String,
-    enum: ["LineString"],
-    default: "LineString",
-  },
-
-  coordinates: {
-    type: [[Number]],
-    default: [],
-  },
-},
-
 
     // ========================================
     // Delivery Status
@@ -160,7 +209,6 @@ routeGeometry: {
 
       default: "pending",
     },
-
 
     // ========================================
     // Delivery Timeline

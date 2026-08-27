@@ -21,6 +21,7 @@ export const createDelivery = async (req, res) => {
     // ========================================
     // Validate Pickup Location
     // ========================================
+
     if (
       !pickupLocation?.address ||
       pickupLocation.latitude === undefined ||
@@ -35,6 +36,7 @@ export const createDelivery = async (req, res) => {
     // ========================================
     // Validate Delivery Location
     // ========================================
+
     if (
       !deliveryLocation?.address ||
       deliveryLocation.latitude === undefined ||
@@ -49,6 +51,7 @@ export const createDelivery = async (req, res) => {
     // ========================================
     // Validate Package Description
     // ========================================
+
     if (!packageDescription?.trim()) {
       return res.status(400).json({
         success: false,
@@ -57,8 +60,9 @@ export const createDelivery = async (req, res) => {
     }
 
     // ========================================
-    // Validate Coordinates
+    // Convert Coordinates
     // ========================================
+
     const pickupLatitude = Number(
       pickupLocation.latitude
     );
@@ -74,6 +78,10 @@ export const createDelivery = async (req, res) => {
     const deliveryLongitude = Number(
       deliveryLocation.longitude
     );
+
+    // ========================================
+    // Validate Coordinates
+    // ========================================
 
     if (
       !Number.isFinite(pickupLatitude) ||
@@ -119,28 +127,67 @@ export const createDelivery = async (req, res) => {
       });
     }
 
-  // ========================================
-// Calculate Road Route
-// ========================================
+    // ========================================
+    // Calculate Road Routes
+    // ========================================
 
-const route = await getRoadRoute(
-  pickupLatitude,
-  pickupLongitude,
-  deliveryLatitude,
-  deliveryLongitude
-);
+    const routeResult = await getRoadRoute(
+      pickupLatitude,
+      pickupLongitude,
+      deliveryLatitude,
+      deliveryLongitude
+    );
 
-const distance = route.distance;
-const estimatedTime = route.estimatedTime;
-const routeGeometry = route.geometry;
+    // ========================================
+    // Validate Routes
+    // ========================================
+
+    if (
+      !Array.isArray(routeResult) ||
+      routeResult.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "No road route could be calculated",
+      });
+    }
+
+    // ========================================
+    // Format Routes For Database
+    // ========================================
+
+    const routes = routeResult.map(
+      (route, index) => ({
+        id:
+          route.id ||
+          `route-${index + 1}`,
+
+        distance: route.distance,
+
+        estimatedTime:
+          route.estimatedTime,
+
+        geometry: {
+          type: "LineString",
+
+          coordinates:
+            route.geometry.coordinates,
+        },
+      })
+    );
 
     // ========================================
     // Validate Package Weight
     // ========================================
 
-    const weight = Number(packageWeight || 0);
+    const weight = Number(
+      packageWeight || 0
+    );
 
-    if (!Number.isFinite(weight) || weight < 0) {
+    if (
+      !Number.isFinite(weight) ||
+      weight < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid package weight",
@@ -173,11 +220,27 @@ const routeGeometry = route.geometry;
 
       notes: notes?.trim() || "",
 
-      distance,
+      // ======================================
+      // Save ALL calculated routes
+      // ======================================
 
-      estimatedTime,
+      routes,
 
-      routeGeometry,
+      // ======================================
+      // No route selected yet
+      // ======================================
+
+      selectedRoute: null,
+
+      selectedRouteAt: null,
+
+      // ======================================
+      // These are set after driver selection
+      // ======================================
+
+      distance: 0,
+
+      estimatedTime: 0,
     });
 
     // ========================================
@@ -192,11 +255,16 @@ const routeGeometry = route.geometry;
         "-password"
       );
 
+    // ========================================
+    // Response
+    // ========================================
+
     return res.status(201).json({
       success: true,
       message: "Delivery created successfully",
       delivery: populatedDelivery,
     });
+
   } catch (error) {
     console.error(
       "Create delivery error:",
@@ -209,8 +277,6 @@ const routeGeometry = route.geometry;
     });
   }
 };
-
-
 // ========================================
 // Get Customer Deliveries
 // Customer gets their own deliveries
@@ -625,19 +691,46 @@ export const acceptDelivery = async (req, res) => {
 // Driver - Start Delivery
 // ========================================
 
-export const startDelivery = async (
-  req,
-  res
-) => {
+export const startDelivery = async (req, res) => {
   try {
-    // ----------------------------------------
-    // Find Delivery
-    // ----------------------------------------
+    // ========================================
+    // Get Delivery Method
+    // ========================================
 
-    const delivery =
-      await Delivery.findById(
-        req.params.id
-      );
+    const { deliveryMethod } = req.body;
+
+    // ========================================
+    // Validate Delivery Method
+    // ========================================
+
+    const allowedMethods = [
+      "motorcycle",
+      "car",
+      "bicycle",
+      "walking",
+    ];
+
+    if (!deliveryMethod) {
+      return res.status(400).json({
+        success: false,
+        message: "Delivery method is required",
+      });
+    }
+
+    if (!allowedMethods.includes(deliveryMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid delivery method",
+      });
+    }
+
+    // ========================================
+    // Find Delivery
+    // ========================================
+
+    const delivery = await Delivery.findById(
+      req.params.id
+    );
 
     if (!delivery) {
       return res.status(404).json({
@@ -646,9 +739,9 @@ export const startDelivery = async (
       });
     }
 
-    // ----------------------------------------
+    // ========================================
     // Verify Driver Assignment
-    // ----------------------------------------
+    // ========================================
 
     if (
       !delivery.driver ||
@@ -662,13 +755,11 @@ export const startDelivery = async (
       });
     }
 
-    // ----------------------------------------
+    // ========================================
     // Delivery Must Be Accepted
-    // ----------------------------------------
+    // ========================================
 
-    if (
-      delivery.status !== "accepted"
-    ) {
+    if (delivery.status !== "accepted") {
       return res.status(400).json({
         success: false,
         message:
@@ -676,9 +767,28 @@ export const startDelivery = async (
       });
     }
 
-    // ----------------------------------------
+    // ========================================
+// Route Must Be Selected
+// ========================================
+
+if (!delivery.selectedRoute) {
+  return res.status(400).json({
+    success: false,
+    message:
+      "Please select a route before starting the delivery",
+  });
+}
+
+    // ========================================
+    // Save Delivery Method
+    // ========================================
+
+    delivery.deliveryMethod =
+      deliveryMethod;
+
+    // ========================================
     // Start Delivery
-    // ----------------------------------------
+    // ========================================
 
     delivery.status = "in_transit";
 
@@ -686,9 +796,9 @@ export const startDelivery = async (
 
     await delivery.save();
 
-    // ----------------------------------------
+    // ========================================
     // Return Updated Delivery
-    // ----------------------------------------
+    // ========================================
 
     const updatedDelivery =
       await Delivery.findById(
@@ -721,7 +831,6 @@ export const startDelivery = async (
     });
   }
 };
-
 
 // ========================================
 // Driver - Update Delivery Location
@@ -1887,3 +1996,139 @@ export const getDeliveryRouteProgress = async (
     });
   }
 };
+
+// ========================================
+// SELECT DELIVERY ROUTE
+// ========================================
+
+export const selectDeliveryRoute = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { routeId } = req.body;
+
+    // ========================================
+    // Validate Route ID
+    // ========================================
+
+    if (!routeId?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Route ID is required",
+      });
+    }
+
+    // ========================================
+    // Find Delivery
+    // ========================================
+
+    const delivery = await Delivery.findById(id);
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery not found",
+      });
+    }
+
+    // ========================================
+    // Make Sure Driver Owns Delivery
+    // ========================================
+
+    if (
+      !delivery.driver ||
+      delivery.driver.toString() !==
+        req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You are not assigned to this delivery",
+      });
+    }
+
+    // ========================================
+    // Only Accepted Deliveries
+    // ========================================
+
+    if (delivery.status !== "accepted") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Route can only be selected after accepting the delivery",
+      });
+    }
+
+    // ========================================
+    // Find Selected Route
+    // ========================================
+
+    const selectedRoute =
+      delivery.routes.find(
+        (route) => route.id === routeId
+      );
+
+    if (!selectedRoute) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Selected route was not found",
+      });
+    }
+
+    // ========================================
+    // Save Selected Route
+    // ========================================
+
+    delivery.selectedRoute =
+      selectedRoute.id;
+
+    delivery.selectedRouteAt =
+      new Date();
+
+    // ========================================
+    // Save Selected Route Information
+    // ========================================
+
+    delivery.distance =
+      selectedRoute.distance;
+
+    delivery.estimatedTime =
+      selectedRoute.estimatedTime;
+
+    await delivery.save();
+
+    // ========================================
+    // Response
+    // ========================================
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Delivery route selected successfully",
+
+      selectedRoute: {
+        id: selectedRoute.id,
+        distance:
+          selectedRoute.distance,
+        estimatedTime:
+          selectedRoute.estimatedTime,
+        geometry:
+          selectedRoute.geometry,
+      },
+
+      delivery,
+    });
+  } catch (error) {
+    console.error(
+      "Select delivery route error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
