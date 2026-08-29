@@ -53,7 +53,7 @@ export const useDriverLocation = ({
       const initialLocation =
         await Location.getCurrentPositionAsync({
           accuracy:
-            Location.Accuracy.High,
+            Location.Accuracy.Balanced,
         });
 
       if (mounted) {

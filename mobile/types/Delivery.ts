@@ -10,6 +10,8 @@ export type DeliveryStatus =
   | "delivered"
   | "cancelled";
 
+  
+
 // ============================================
 // LOCATION
 // ============================================
@@ -56,7 +58,7 @@ export interface DeliveryRoute {
 
 export interface Customer {
   _id: string;
-  fullName?: string;
+  name?: string;
   email?: string;
   phone?: string;
 }
@@ -67,7 +69,7 @@ export interface Customer {
 
 export interface Driver {
   _id: string;
-  fullName?: string;
+  name?: string;
   email?: string;
   phone?: string;
 }
@@ -108,6 +110,8 @@ export interface Delivery {
   selectedRoute: string | null;
 
   selectedRouteAt: string | null;
+
+
 
   // ==========================================
   // SELECTED ROUTE INFORMATION

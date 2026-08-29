@@ -17,6 +17,9 @@ import {
   updateDeliveryLocation,
   completeDelivery,
   selectDeliveryRoute,
+  CreateDeliveryData,
+  createCustomerDelivery,
+  getCustomerDeliveries,
   } from "../../services/deliveryService";
 
 // ============================================
@@ -29,6 +32,7 @@ interface DeliveryState {
   loading: boolean;
   error: string | null;
 
+  creating: boolean;
   accepting: boolean;
   selectingRoute: boolean;
   starting: boolean;
@@ -42,6 +46,7 @@ const initialState: DeliveryState = {
   loading: false,
   error: null,
 
+  creating: false,
   accepting: false,
   selectingRoute: false,
   starting: false,
@@ -109,6 +114,43 @@ export const acceptDriverDelivery =
         return rejectWithValue(
           error.message ||
             "Failed to accept delivery"
+        );
+      }
+    }
+  );
+
+
+  // ============================================
+// CREATE CUSTOMER DELIVERY
+// ============================================
+
+export const createCustomerDeliveryThunk =
+  createAsyncThunk<
+    Delivery,
+    {
+      data: CreateDeliveryData;
+      token: string;
+    },
+    { rejectValue: string }
+  >(
+    "deliveries/createCustomerDelivery",
+    async (
+      { data, token },
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await createCustomerDelivery(
+            data,
+            token
+          );
+
+        return response.delivery;
+
+      } catch (error: any) {
+        return rejectWithValue(
+          error.message ||
+            "Failed to create delivery"
         );
       }
     }
@@ -296,6 +338,38 @@ export const completeDriverDelivery =
     }
   );
 
+
+  // ============================================
+// GET CUSTOMER DELIVERIES
+// ============================================
+
+export const fetchCustomerDeliveries =
+  createAsyncThunk<
+    Delivery[],
+    string,
+    { rejectValue: string }
+  >(
+    "deliveries/fetchCustomerDeliveries",
+    async (token, { rejectWithValue }) => {
+      try {
+        const response =
+          await getCustomerDeliveries(token);
+
+        console.log(
+          "CUSTOMER DELIVERIES:",
+          response.deliveries
+        );
+
+        return response.deliveries;
+      } catch (error: any) {
+        return rejectWithValue(
+          error.message ||
+            "Failed to fetch customer deliveries"
+        );
+      }
+    }
+  );
+
 // ============================================
 // SLICE
 // ============================================
@@ -332,6 +406,43 @@ const deliverySlice = createSlice({
   },
 
   extraReducers: (builder) => {
+   
+   // ========================================
+// CREATE CUSTOMER DELIVERY
+// ========================================
+
+builder
+
+  .addCase(
+    createCustomerDeliveryThunk.pending,
+    (state) => {
+      state.creating = true;
+      state.error = null;
+    }
+  )
+
+  .addCase(
+    createCustomerDeliveryThunk.fulfilled,
+    (state, action) => {
+      state.creating = false;
+
+      state.deliveries.unshift(
+        action.payload
+      );
+    }
+  )
+
+  .addCase(
+    createCustomerDeliveryThunk.rejected,
+    (state, action) => {
+      state.creating = false;
+
+      state.error =
+        action.payload ||
+        "Failed to create delivery";
+    }
+  );
+
     // ========================================
     // FETCH
     // ========================================
@@ -603,8 +714,43 @@ builder
             "Failed to complete delivery";
         }
       );
+
+      // ========================================
+// FETCH CUSTOMER DELIVERIES
+// ========================================
+
+builder
+
+  .addCase(
+    fetchCustomerDeliveries.pending,
+    (state) => {
+      state.loading = true;
+      state.error = null;
+    }
+  )
+
+  .addCase(
+    fetchCustomerDeliveries.fulfilled,
+    (state, action) => {
+      state.loading = false;
+      state.deliveries = action.payload;
+    }
+  )
+
+  .addCase(
+    fetchCustomerDeliveries.rejected,
+    (state, action) => {
+      state.loading = false;
+
+      state.error =
+        action.payload ||
+        "Failed to fetch customer deliveries";
+    }
+  );
   },
 });
+
+
 
 export const {
   updateDeliveryStatus,

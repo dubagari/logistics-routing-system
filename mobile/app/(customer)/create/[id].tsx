@@ -1,55 +1,15 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useAppSelector } from "../../../hooks/redux";
 
 const CustomerOrderDetails = () => {
   const router = useRouter();
-
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // Temporary data — backend will replace this later.
-  const orders = [
-    {
-      id: "1",
-      orderNumber: "ORD-001",
-      pickupLocation: "Warehouse, Abuja",
-      deliveryLocation: "Garki, Abuja",
-      status: "in_transit",
-      driverName: "Ahmed Musa",
-      driverPhone: "08012345678",
-      distance: 12.5,
-      estimatedTime: 25,
-      amount: 15000,
-      packageDescription: "Electronics and accessories",
-    },
-    {
-      id: "2",
-      orderNumber: "ORD-002",
-      pickupLocation: "Wuse, Abuja",
-      deliveryLocation: "Maitama, Abuja",
-      status: "delivered",
-      driverName: "Musa Ibrahim",
-      driverPhone: "08023456789",
-      distance: 8.2,
-      estimatedTime: 18,
-      amount: 12000,
-      packageDescription: "Documents",
-    },
-    {
-      id: "3",
-      orderNumber: "ORD-003",
-      pickupLocation: "Kubwa, Abuja",
-      deliveryLocation: "Gwarinpa, Abuja",
-      status: "pending",
-      driverName: "Not assigned",
-      driverPhone: "",
-      distance: 15.4,
-      estimatedTime: 30,
-      amount: 10000,
-      packageDescription: "Clothing items",
-    },
-  ];
-
-  const order = orders.find((item) => item.id === id);
+  const { deliveries } = useAppSelector((state) => state.deliveries);
+  
+  // Find the delivery from the Redux store
+  const order = deliveries.find((item) => item._id === id);
 
   if (!order) {
     return (
@@ -87,7 +47,7 @@ const CustomerOrderDetails = () => {
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {order.orderNumber}
+          ID: {order._id.slice(-8).toUpperCase()}
         </Text>
 
       </View>
@@ -111,7 +71,7 @@ const CustomerOrderDetails = () => {
           <View className="mt-2 flex-row items-center justify-between">
 
             <Text className="text-xl font-bold capitalize text-slate-900">
-              {order.status.replace("_", " ")}
+              {order.status ? order.status.replace("_", " ") : "Pending"}
             </Text>
 
             <View
@@ -134,7 +94,7 @@ const CustomerOrderDetails = () => {
               >
                 {order.status === "in_transit"
                   ? "IN TRANSIT"
-                  : order.status.toUpperCase()}
+                  : (order.status || "pending").toUpperCase()}
               </Text>
             </View>
 
@@ -156,7 +116,7 @@ const CustomerOrderDetails = () => {
             </Text>
 
             <Text className="mt-2 text-base text-slate-800">
-              📍 {order.pickupLocation}
+              📍 {order.pickupLocation?.address || "N/A"}
             </Text>
 
           </View>
@@ -168,7 +128,7 @@ const CustomerOrderDetails = () => {
             </Text>
 
             <Text className="mt-2 text-base text-slate-800">
-              📍 {order.deliveryLocation}
+              📍 {order.deliveryLocation?.address || "N/A"}
             </Text>
 
           </View>
@@ -187,17 +147,17 @@ const CustomerOrderDetails = () => {
           </Text>
 
           <Text className="mt-1 text-base font-semibold text-slate-800">
-            🚚 {order.driverName}
+            🚚 {typeof order.driver === "object" ? order.driver?.name : "Not assigned"}
           </Text>
 
-          {order.driverPhone && (
+          {typeof order.driver === "object" && order.driver?.phone && (
             <>
               <Text className="mt-4 text-xs font-semibold text-slate-400">
                 PHONE
               </Text>
 
               <Text className="mt-1 text-base text-slate-800">
-                📞 {order.driverPhone}
+                📞 {order.driver.phone}
               </Text>
             </>
           )}
@@ -236,7 +196,7 @@ const CustomerOrderDetails = () => {
               </Text>
 
               <Text className="mt-1 font-semibold text-slate-800">
-                {order.distance} km
+                {order.distance ? `${order.distance} km` : "N/A"}
               </Text>
             </View>
 
@@ -246,7 +206,7 @@ const CustomerOrderDetails = () => {
               </Text>
 
               <Text className="mt-1 font-semibold text-slate-800">
-                {order.estimatedTime} min
+                {order.estimatedTime ? `${order.estimatedTime} min` : "N/A"}
               </Text>
             </View>
 
@@ -256,7 +216,7 @@ const CustomerOrderDetails = () => {
               </Text>
 
               <Text className="mt-1 font-bold text-slate-800">
-                ₦{order.amount.toLocaleString()}
+                ₦{order.distance ? (order.distance * 1200).toLocaleString() : "TBD"}
               </Text>
             </View>
 
@@ -273,7 +233,7 @@ const CustomerOrderDetails = () => {
                 router.push({
                   pathname: "/(customer)/track-delivery",
                   params: {
-                    id: order.id,
+                    id: order._id,
                   },
                 })
               }

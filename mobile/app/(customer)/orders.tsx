@@ -1,70 +1,67 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+
 import { useRouter } from "expo-router";
+
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../hooks/redux";
+
+import {
+  fetchCustomerDeliveries,
+} from "../../store/slices/deliverySlice";
+
+import { useEffect } from "react";
 
 const CustomerOrders = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  // Temporary data.
-  // This will come from the backend later.
-  const orders = [
-    {
-      id: "1",
-      orderNumber: "ORD-001",
-      pickupLocation: "Warehouse, Abuja",
-      deliveryLocation: "Garki, Abuja",
-      status: "in_transit",
-      driverName: "Ahmed Musa",
-      distance: 12.5,
-      estimatedTime: 25,
-      amount: 15000,
-    },
-    {
-      id: "2",
-      orderNumber: "ORD-002",
-      pickupLocation: "Wuse, Abuja",
-      deliveryLocation: "Maitama, Abuja",
-      status: "delivered",
-      driverName: "Musa Ibrahim",
-      distance: 8.2,
-      estimatedTime: 18,
-      amount: 12000,
-    },
-    {
-      id: "3",
-      orderNumber: "ORD-003",
-      pickupLocation: "Kubwa, Abuja",
-      deliveryLocation: "Gwarinpa, Abuja",
-      status: "pending",
-      driverName: "Not assigned",
-      distance: 15.4,
-      estimatedTime: 30,
-      amount: 10000,
-    },
-  ];
+  const { token } = useAppSelector(
+    (state) => state.auth
+  );
+
+  const {
+    deliveries,
+    loading,
+    error,
+  } = useAppSelector(
+    (state) => state.deliveries
+  );
+
+  useEffect(() => {
+    if (token) {
+      dispatch(
+        fetchCustomerDeliveries(token)
+      );
+    }
+  }, [token, dispatch]);
 
   return (
     <View className="flex-1 bg-slate-100">
 
-      {/* Fixed Header */}
+      {/* HEADER */}
+
       <View className="bg-blue-700 px-5 pb-7 pt-14">
 
-        <Pressable onPress={() => router.back()}>
-          <Text className="font-semibold text-white">
-            ← Back
-          </Text>
-        </Pressable>
-
-        <Text className="mt-5 text-2xl font-bold text-white">
-          My Orders
+        <Text className="text-2xl font-bold text-white">
+          My Deliveries
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {orders.length} orders
+          {deliveries.length} deliveries
         </Text>
 
       </View>
 
-      {/* Orders */}
+      {/* CONTENT */}
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -73,160 +70,226 @@ const CustomerOrders = () => {
         }}
       >
 
-        {orders.map((order) => (
-          <View
-            key={order.id}
-            className="mb-4 rounded-2xl bg-white p-5"
-          >
+        {/* LOADING */}
 
-            {/* Order Header */}
-            <View className="flex-row items-center justify-between">
+        {loading && (
+          <View className="items-center py-10">
 
-              <View>
-                <Text className="text-lg font-bold text-slate-900">
-                  {order.orderNumber}
-                </Text>
+            <ActivityIndicator
+              size="large"
+              color="#1d4ed8"
+            />
 
-                <Text className="mt-1 text-sm text-slate-500">
-                  Delivery Order
-                </Text>
-              </View>
-
-              {/* Status */}
-              <View
-                className={`rounded-full px-3 py-1 ${
-                  order.status === "pending"
-                    ? "bg-orange-100"
-                    : order.status === "in_transit"
-                      ? "bg-blue-100"
-                      : "bg-green-100"
-                }`}
-              >
-                <Text
-                  className={`text-xs font-bold ${
-                    order.status === "pending"
-                      ? "text-orange-600"
-                      : order.status === "in_transit"
-                        ? "text-blue-600"
-                        : "text-green-600"
-                  }`}
-                >
-                  {order.status === "in_transit"
-                    ? "IN TRANSIT"
-                    : order.status.toUpperCase()}
-                </Text>
-              </View>
-
-            </View>
-
-            {/* Route */}
-            <View className="mt-5 border-t border-slate-100 pt-4">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                ROUTE
-              </Text>
-
-              <Text className="mt-2 text-sm text-slate-700">
-                📍 {order.pickupLocation}
-              </Text>
-
-              <Text className="mt-2 text-sm text-slate-700">
-                📍 {order.deliveryLocation}
-              </Text>
-
-            </View>
-
-            {/* Driver */}
-            <View className="mt-4">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                DRIVER
-              </Text>
-
-              <Text className="mt-1 font-semibold text-slate-800">
-                🚚 {order.driverName}
-              </Text>
-
-            </View>
-
-            {/* Information */}
-            <View className="mt-4 flex-row justify-between border-t border-slate-100 pt-4">
-
-              <View>
-                <Text className="text-xs text-slate-400">
-                  DISTANCE
-                </Text>
-
-                <Text className="mt-1 font-semibold text-slate-800">
-                  {order.distance} km
-                </Text>
-              </View>
-
-              <View>
-                <Text className="text-xs text-slate-400">
-                  TIME
-                </Text>
-
-                <Text className="mt-1 font-semibold text-slate-800">
-                  {order.estimatedTime} min
-                </Text>
-              </View>
-
-              <View>
-                <Text className="text-xs text-slate-400">
-                  AMOUNT
-                </Text>
-
-                <Text className="mt-1 font-bold text-slate-800">
-                  ₦{order.amount.toLocaleString()}
-                </Text>
-              </View>
-
-            </View>
-
-            {/* Actions */}
-            <View className="mt-5 flex-row gap-3">
-
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/(customer)/order-details",
-                    params: {
-                      id: order.id,
-                    },
-                  })
-                }
-                className="flex-1 rounded-xl bg-blue-700 py-3"
-              >
-                <Text className="text-center font-bold text-white">
-                  VIEW ORDER
-                </Text>
-              </Pressable>
-
-              {order.status === "in_transit" && (
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(customer)/track-delivery",
-                      params: {
-                        id: order.id,
-                      },
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-green-600 py-3"
-                >
-                  <Text className="text-center font-bold text-white">
-                    TRACK
-                  </Text>
-                </Pressable>
-              )}
-
-            </View>
+            <Text className="mt-3 text-slate-500">
+              Loading deliveries...
+            </Text>
 
           </View>
-        ))}
+        )}
+
+        {/* ERROR */}
+
+        {!loading && error && (
+          <View className="rounded-2xl bg-red-50 p-5">
+
+            <Text className="text-center font-semibold text-red-600">
+              {error}
+            </Text>
+
+          </View>
+        )}
+
+        {/* EMPTY */}
+
+        {!loading &&
+          !error &&
+          deliveries.length === 0 && (
+            <View className="rounded-2xl bg-white p-8">
+
+              <Text className="text-center text-lg font-bold text-slate-800">
+                No deliveries yet
+              </Text>
+
+              <Text className="mt-2 text-center text-slate-500">
+                Your delivery orders will appear here.
+              </Text>
+
+            </View>
+          )}
+
+        {/* DELIVERIES */}
+
+        {!loading &&
+          deliveries.map((delivery) => (
+
+            <View
+              key={delivery._id}
+              className="mb-4 rounded-2xl bg-white p-5"
+            >
+
+              {/* HEADER */}
+
+              <View className="flex-row items-center justify-between">
+
+                <View className="flex-1">
+
+                  <Text className="text-lg font-bold text-slate-900">
+                    Delivery
+                  </Text>
+
+                  <Text className="mt-1 text-xs text-slate-400">
+                    #{delivery._id}
+                  </Text>
+
+                </View>
+
+                {/* STATUS */}
+
+                <View
+                  className={`rounded-full px-3 py-1 ${
+                    delivery.status === "pending"
+                      ? "bg-orange-100"
+                      : delivery.status ===
+                        "in_transit"
+                        ? "bg-blue-100"
+                        : delivery.status ===
+                          "delivered"
+                          ? "bg-green-100"
+                          : "bg-slate-100"
+                  }`}
+                >
+
+                  <Text
+                    className={`text-xs font-bold ${
+                      delivery.status === "pending"
+                        ? "text-orange-600"
+                        : delivery.status ===
+                          "in_transit"
+                          ? "text-blue-600"
+                          : delivery.status ===
+                            "delivered"
+                            ? "text-green-600"
+                            : "text-slate-600"
+                    }`}
+                  >
+                    {delivery.status
+                      .replace("_", " ")
+                      .toUpperCase()}
+                  </Text>
+
+                </View>
+
+              </View>
+
+              {/* ROUTE */}
+
+              <View className="mt-5 border-t border-slate-100 pt-4">
+
+                <Text className="text-xs font-semibold text-slate-400">
+                  ROUTE
+                </Text>
+
+                <Text className="mt-2 text-sm text-slate-700">
+                  📍 {delivery.pickupLocation.address}
+                </Text>
+
+                <Text className="mt-2 text-sm text-slate-700">
+                  📍 {delivery.deliveryLocation.address}
+                </Text>
+
+              </View>
+
+              {/* PACKAGE */}
+
+              <View className="mt-4">
+
+                <Text className="text-xs font-semibold text-slate-400">
+                  PACKAGE
+                </Text>
+
+                <Text className="mt-1 font-semibold text-slate-800">
+                  {delivery.packageDescription}
+                </Text>
+
+              </View>
+
+              {/* INFORMATION */}
+
+              <View className="mt-4 flex-row justify-between border-t border-slate-100 pt-4">
+
+                <View>
+                  <Text className="text-xs text-slate-400">
+                    DISTANCE
+                  </Text>
+
+                  <Text className="mt-1 font-semibold text-slate-800">
+                    {delivery.distance || 0} km
+                  </Text>
+                </View>
+
+                <View>
+                  <Text className="text-xs text-slate-400">
+                    TIME
+                  </Text>
+
+                  <Text className="mt-1 font-semibold text-slate-800">
+                    {delivery.estimatedTime || 0} min
+                  </Text>
+                </View>
+
+              </View>
+
+              {/* ACTIONS */}
+
+              <View className="mt-5 flex-row gap-3">
+
+                <Pressable
+                  onPress={() =>
+                    router.push(`/(customer)/create/${delivery._id}`)
+                  }
+                  className="flex-1 rounded-xl bg-blue-700 py-3"
+                >
+
+                  <Text className="text-center font-bold text-white">
+                    VIEW ORDER
+                  </Text>
+
+                </Pressable>
+
+                {(delivery.status ===
+                  "accepted" ||
+                  delivery.status ===
+                    "in_transit") && (
+
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname:
+                          "/(customer)/track-delivery",
+                        params: {
+                          id: delivery._id,
+                        },
+                      })
+                    }
+                    className="flex-1 rounded-xl bg-green-600 py-3"
+                  >
+
+                    <Text className="text-center font-bold text-white">
+                      TRACK
+                    </Text>
+
+                  </Pressable>
+
+                )}
+
+              </View>
+
+            </View>
+
+          ))}
 
       </ScrollView>
+
     </View>
   );
 };

@@ -109,22 +109,7 @@ const deliverySchema = new mongoose.Schema(
       default: "",
     },
 
-    // ========================================
-// Delivery Method
-// ========================================
 
-deliveryMethod: {
-  type: String,
-
-  enum: [
-    "motorcycle",
-    "car",
-    "bicycle",
-    "walking",
-  ],
-
-  default: null,
-},
 
     // ========================================
     // CALCULATED ROUTES

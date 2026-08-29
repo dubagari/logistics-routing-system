@@ -77,11 +77,16 @@ const Deliveries = () => {
 
             {/* Customer */}
             <Text className="mt-4 text-base font-semibold text-slate-800">
-              {item.customer.name}
+              {typeof item.customer !== "string"
+                ? item.customer.name
+                : "Unknown Customer"}
             </Text>
 
             <Text className="mt-1 text-sm text-slate-500">
-              📞 {item.customer.phone}
+              📞{" "}
+              {typeof item.customer !== "string"
+                ? item.customer.phone
+                : "N/A"}
             </Text>
 
             {/* Locations */}

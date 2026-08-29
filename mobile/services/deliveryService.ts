@@ -33,6 +33,24 @@ interface DeliveryLocationResponse {
   estimatedTime: number;
 }
 
+export interface CreateDeliveryData {
+  pickupLocation: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+
+  deliveryLocation: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+
+  packageDescription: string;
+  packageWeight?: number;
+  notes?: string;
+}
+
 // ============================================
 // GET DRIVER DELIVERIES
 // ============================================
@@ -95,33 +113,7 @@ export const startDelivery = async (
   return response;
 };
 
-// ============================================
-// SELECT DELIVERY ROUTE
-// ============================================
 
-// export const selectDeliveryRoute = async (
-//   id: string,
-//   token: string,
-//   routeId: string
-// ): Promise<DeliveryActionResponse> => {
-//   const response = await apiRequest(
-//     `/deliveries/${id}/route`,
-//     {
-//       method: "PUT",
-
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//         "Content-Type": "application/json",
-//       },
-
-//       body: JSON.stringify({
-//         routeId,
-//       }),
-//     }
-//   );
-
-//   return response;
-// };
 
 export const selectDeliveryRoute = async (
   id: string,
@@ -195,3 +187,50 @@ export const completeDelivery = async (
 
   return response;
 };
+
+// ============================================
+// CREATE DELIVERY
+// ============================================
+
+export const createCustomerDelivery = async (
+  data: CreateDeliveryData,
+  token: string
+): Promise<DeliveryActionResponse> => {
+  const response = await apiRequest(
+    "/deliveries",
+    {
+      method: "POST",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response;
+};
+
+// ============================================
+// GET CUSTOMER DELIVERIES
+// ============================================
+
+export const getCustomerDeliveries = async (
+  token: string
+): Promise<DriverDeliveriesResponse> => {
+  const response = await apiRequest(
+    "/deliveries/customer",
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response;
+};
+
+

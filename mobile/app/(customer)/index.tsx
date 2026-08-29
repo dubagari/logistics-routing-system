@@ -1,183 +1,123 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+} from "react-native";
+
 import { useRouter } from "expo-router";
+
+import {
+  useAppSelector,
+} from "../../hooks/redux";
 
 const CustomerDashboard = () => {
   const router = useRouter();
 
-  // Temporary data.
-  // Later these values will come from the backend.
-  const customer = {
-    name: "Abubakar Ali",
-    totalOrders: 5,
-    pendingOrders: 2,
-    completedOrders: 3,
-  };
+  const { user } = useAppSelector(
+    (state) => state.auth
+  );
 
   return (
     <View className="flex-1 bg-slate-100">
 
-      {/* Fixed Header */}
+      {/* HEADER */}
       <View className="bg-blue-700 px-5 pb-7 pt-14">
-        <Text className="text-blue-100">
-          Welcome back 👋
+
+        <Text className="text-sm text-blue-100">
+          Welcome back
         </Text>
 
         <Text className="mt-1 text-2xl font-bold text-white">
-          {customer.name}
+          {user?.name || "Customer"}
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          Track your deliveries and orders
+          Manage your deliveries
         </Text>
+
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        className="flex-1"
         contentContainerStyle={{
           padding: 20,
-          paddingBottom: 120,
+          paddingBottom: 40,
         }}
+        showsVerticalScrollIndicator={false}
       >
 
-        {/* Statistics */}
-        <View className="flex-row gap-3">
-
-          <View className="flex-1 rounded-2xl bg-white p-4">
-            <Text className="text-2xl font-bold text-slate-900">
-              {customer.totalOrders}
-            </Text>
-
-            <Text className="mt-1 text-sm text-slate-500">
-              Total Orders
-            </Text>
-          </View>
-
-          <View className="flex-1 rounded-2xl bg-white p-4">
-            <Text className="text-2xl font-bold text-orange-500">
-              {customer.pendingOrders}
-            </Text>
-
-            <Text className="mt-1 text-sm text-slate-500">
-              Pending
-            </Text>
-          </View>
-
-          <View className="flex-1 rounded-2xl bg-white p-4">
-            <Text className="text-2xl font-bold text-green-600">
-              {customer.completedOrders}
-            </Text>
-
-            <Text className="mt-1 text-sm text-slate-500">
-              Completed
-            </Text>
-          </View>
-
-        </View>
-
-        {/* Place Order */}
-        <View className="mt-5 rounded-2xl bg-white p-5">
-
-          <Text className="text-lg font-bold text-slate-900">
-            Need a Delivery?
-          </Text>
-
-          <Text className="mt-2 text-sm leading-5 text-slate-500">
-            Create a new delivery order and provide your pickup
-            and delivery locations.
-          </Text>
-
-          <Pressable
-            onPress={() => router.push("/(customer)/create-order")}
-            className="mt-5 rounded-xl bg-blue-700 py-4"
-          >
-            <Text className="text-center font-bold text-white">
-              CREATE NEW ORDER
-            </Text>
-          </Pressable>
-
-        </View>
-
-        {/* Recent Orders */}
-        <View className="mt-5 rounded-2xl bg-white p-5">
+        {/* CREATE DELIVERY */}
+        <Pressable
+          onPress={() =>
+            router.push(
+              "/(customer)/create-delivery"
+            )
+          }
+          className="rounded-2xl bg-white p-5"
+        >
 
           <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">
-              Recent Orders
-            </Text>
 
-            <Pressable
-              onPress={() => router.push("/(customer)/orders")}
-            >
-              <Text className="font-semibold text-blue-700">
-                View All
+            <View className="flex-1">
+
+              <Text className="text-xl font-bold text-slate-900">
+                Create a Delivery
               </Text>
-            </Pressable>
-          </View>
 
-          {/* Temporary Order */}
-          <View className="mt-5 border-t border-slate-100 pt-4">
+              <Text className="mt-1 text-sm text-slate-500">
+                Send a package to another location
+              </Text>
 
-            <View className="flex-row items-center justify-between">
+            </View>
 
-              <View>
-                <Text className="font-bold text-slate-900">
-                  ORD-001
-                </Text>
-
-                <Text className="mt-1 text-sm text-slate-500">
-                  Warehouse → Garki
-                </Text>
-              </View>
-
-              <View className="rounded-full bg-blue-100 px-3 py-1">
-                <Text className="text-xs font-bold text-blue-600">
-                  IN TRANSIT
-                </Text>
-              </View>
-
+            <View className="rounded-full bg-blue-100 px-4 py-3">
+              <Text className="text-xl">
+                +
+              </Text>
             </View>
 
           </View>
 
-          {/* Second Order */}
-          <View className="mt-4 border-t border-slate-100 pt-4">
+        </Pressable>
 
-            <View className="flex-row items-center justify-between">
+        {/* ACTIVE DELIVERIES */}
+        <View className="mt-6">
 
-              <View>
-                <Text className="font-bold text-slate-900">
-                  ORD-002
-                </Text>
+          <Text className="text-lg font-bold text-slate-900">
+            Active Deliveries
+          </Text>
 
-                <Text className="mt-1 text-sm text-slate-500">
-                  Wuse → Maitama
-                </Text>
-              </View>
+          <View className="mt-3 rounded-2xl bg-white p-5">
 
-              <View className="rounded-full bg-green-100 px-3 py-1">
-                <Text className="text-xs font-bold text-green-600">
-                  DELIVERED
-                </Text>
-              </View>
-
-            </View>
+            <Text className="text-center text-slate-500">
+              No active deliveries
+            </Text>
 
           </View>
 
         </View>
 
-        {/* Profile */}
-        <Pressable
-          onPress={() => router.push("/(customer)/profile")}
-          className="mt-5 rounded-xl bg-slate-800 py-4"
-        >
-          <Text className="text-center font-bold text-white">
-            👤 MY PROFILE
+        {/* RECENT DELIVERIES */}
+        <View className="mt-6">
+
+          <Text className="text-lg font-bold text-slate-900">
+            Recent Deliveries
           </Text>
-        </Pressable>
+
+          <View className="mt-3 rounded-2xl bg-white p-5">
+
+            <Text className="text-center text-slate-500">
+              No recent deliveries
+            </Text>
+
+          </View>
+
+        </View>
 
       </ScrollView>
+
     </View>
   );
 };

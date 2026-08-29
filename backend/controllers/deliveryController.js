@@ -694,37 +694,6 @@ export const acceptDelivery = async (req, res) => {
 export const startDelivery = async (req, res) => {
   try {
     // ========================================
-    // Get Delivery Method
-    // ========================================
-
-    const { deliveryMethod } = req.body;
-
-    // ========================================
-    // Validate Delivery Method
-    // ========================================
-
-    const allowedMethods = [
-      "motorcycle",
-      "car",
-      "bicycle",
-      "walking",
-    ];
-
-    if (!deliveryMethod) {
-      return res.status(400).json({
-        success: false,
-        message: "Delivery method is required",
-      });
-    }
-
-    if (!allowedMethods.includes(deliveryMethod)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid delivery method",
-      });
-    }
-
-    // ========================================
     // Find Delivery
     // ========================================
 
@@ -779,12 +748,7 @@ if (!delivery.selectedRoute) {
   });
 }
 
-    // ========================================
-    // Save Delivery Method
-    // ========================================
 
-    delivery.deliveryMethod =
-      deliveryMethod;
 
     // ========================================
     // Start Delivery

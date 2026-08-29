@@ -66,6 +66,7 @@ const DriverLayout = () => {
         name="delivery-details"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
 
@@ -73,6 +74,7 @@ const DriverLayout = () => {
         name="delivery"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>
