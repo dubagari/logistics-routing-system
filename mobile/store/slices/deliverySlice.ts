@@ -20,6 +20,7 @@ import {
   CreateDeliveryData,
   createCustomerDelivery,
   getCustomerDeliveries,
+  getCustomerDeliveryById,
   } from "../../services/deliveryService";
 
 // ============================================
@@ -151,6 +152,45 @@ export const createCustomerDeliveryThunk =
         return rejectWithValue(
           error.message ||
             "Failed to create delivery"
+        );
+      }
+    }
+  );
+
+
+
+// ============================================
+// GET CUSTOMER DELIVERY BY ID
+// ============================================
+
+export const getCustomerDeliveryByIdThunk =
+  createAsyncThunk<
+    Delivery,
+    {
+      id: string;
+      token: string;
+    },
+    { rejectValue: string }
+  >(
+    "deliveries/getCustomerDeliveryById",
+
+    async (
+      { id, token },
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await getCustomerDeliveryById(
+            id,
+            token
+          );
+
+        return response.delivery;
+
+      } catch (error: any) {
+        return rejectWithValue(
+          error.message ||
+            "Failed to get delivery"
         );
       }
     }

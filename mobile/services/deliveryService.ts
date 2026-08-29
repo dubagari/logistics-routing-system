@@ -234,3 +234,26 @@ export const getCustomerDeliveries = async (
 };
 
 
+
+// ============================================
+// GET CUSTOMER DELIVERY BY ID
+// ============================================
+
+export const getCustomerDeliveryById = async (
+  id: string,
+  token: string
+): Promise<DeliveryActionResponse> => {
+  const response = await apiRequest(
+    `/deliveries/${id}`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response;
+};
+

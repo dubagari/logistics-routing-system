@@ -1,316 +1,235 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAppSelector } from "../../hooks/redux";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+
+import { useEffect } from "react";
+import { useRouter } from "expo-router";
+
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../hooks/redux";
+
+import {
+  fetchCustomerDeliveries,
+} from "../../store/slices/deliverySlice";
 
 const CustomerTracking = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  const { id } = useLocalSearchParams<{ id: string }>();
-
-  const order = useAppSelector((state) =>
-    state.deliveries.deliveries.find(
-      (item) => item._id === id
-    )
+  const { token } = useAppSelector(
+    (state) => state.auth
   );
 
-  // Order not found
-  if (!order) {
-    return (
-      <View className="flex-1 items-center justify-center bg-slate-100 px-5">
-        <Text className="text-xl font-bold text-slate-800">
-          Order not found
-        </Text>
+  const {
+    deliveries,
+    loading,
+    error,
+  } = useAppSelector(
+    (state) => state.deliveries
+  );
 
-        <Pressable
-          onPress={() => router.back()}
-          className="mt-5 rounded-xl bg-blue-700 px-6 py-3"
-        >
-          <Text className="font-bold text-white">
-            Go Back
-          </Text>
-        </Pressable>
-      </View>
+  useEffect(() => {
+    if (token) {
+      dispatch(
+        fetchCustomerDeliveries(token)
+      );
+    }
+  }, [token, dispatch]);
+
+  const activeDeliveries =
+    deliveries.filter(
+      (delivery) =>
+        delivery.status === "assigned" ||
+        delivery.status === "accepted" ||
+        delivery.status === "in_transit"
     );
-  }
-
-  const isPending = order.status === "pending";
-  const isInTransit = order.status === "in_transit";
-  const isDelivered = order.status === "delivered";
 
   return (
     <View className="flex-1 bg-slate-100">
 
-      {/* Fixed Header */}
-      <View className="bg-blue-700 px-5 pb-6 pt-14">
+      {/* HEADER */}
 
-        <Pressable onPress={() => router.back()}>
-          <Text className="text-base font-semibold text-white">
-            ← Back
-          </Text>
-        </Pressable>
+      <View className="bg-blue-700 px-5 pb-7 pt-14">
 
-        <Text className="mt-5 text-2xl font-bold text-white">
-          Track Order
+        <Text className="text-2xl font-bold text-white">
+          Tracking
         </Text>
 
         <Text className="mt-1 text-blue-100">
-          {order._id}
+          Track your active deliveries
         </Text>
 
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: 20,
+          padding: 20,
           paddingBottom: 120,
         }}
       >
 
-        {/* Current Status */}
-        <View className="mx-5 rounded-2xl bg-white p-5">
+        {/* LOADING */}
 
-          <Text className="text-xs font-semibold text-slate-400">
-            CURRENT STATUS
-          </Text>
+        {loading && (
+          <View className="items-center py-10">
 
-          <Text
-            className={`mt-2 text-xl font-bold ${
-              isPending
-                ? "text-orange-500"
-                : isInTransit
-                  ? "text-blue-600"
-                  : "text-green-600"
-            }`}
-          >
-            {isInTransit
-              ? "IN TRANSIT"
-              : order.status.toUpperCase()}
-          </Text>
+            <ActivityIndicator
+              size="large"
+              color="#1d4ed8"
+            />
 
-          <Text className="mt-2 text-sm text-slate-500">
-            {isPending
-              ? "Your order is waiting to be picked up."
-              : isInTransit
-                ? "Your order is currently on the way."
-                : "Your order has been delivered successfully."}
-          </Text>
-
-        </View>
-
-        {/* Map */}
-        <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
-
-          <Text className="text-lg font-bold text-slate-900">
-            Live Location
-          </Text>
-
-          <View className="mt-4 h-56 items-center justify-center rounded-xl bg-slate-200">
-
-            <Text className="text-4xl">
-              📍
-            </Text>
-
-            <Text className="mt-3 font-semibold text-slate-500">
-              Map will appear here
-            </Text>
-
-            <Text className="mt-1 text-center text-xs text-slate-400">
-              Real-time GPS tracking will be connected later.
+            <Text className="mt-3 text-slate-500">
+              Loading deliveries...
             </Text>
 
           </View>
+        )}
 
-        </View>
+        {/* ERROR */}
 
-        {/* Route */}
-        <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
+        {!loading && error && (
+          <View className="rounded-2xl bg-red-50 p-5">
 
-          <Text className="text-lg font-bold text-slate-900">
-            Delivery Route
-          </Text>
-
-          {/* Pickup */}
-          <View className="mt-5 flex-row">
-
-            <View className="items-center">
-
-              <View className="h-4 w-4 rounded-full bg-blue-700" />
-
-              <View className="h-14 w-0.5 bg-slate-200" />
-
-            </View>
-
-            <View className="ml-4 flex-1">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                PICKUP
-              </Text>
-
-              <Text className="mt-1 text-base text-slate-800">
-                {order.pickupLocation.address}
-              </Text>
-
-            </View>
+            <Text className="text-center font-semibold text-red-600">
+              {error}
+            </Text>
 
           </View>
+        )}
 
-          {/* Delivery */}
-          <View className="flex-row">
+        {/* NO ACTIVE DELIVERY */}
 
-            <View className="items-center">
+        {!loading &&
+          !error &&
+          activeDeliveries.length === 0 && (
+            <View className="rounded-2xl bg-white p-8">
 
-              <View
-                className={`h-4 w-4 rounded-full ${
-                  isDelivered
-                    ? "bg-green-600"
-                    : "bg-orange-500"
-                }`}
-              />
-
-            </View>
-
-            <View className="ml-4 flex-1">
-
-              <Text className="text-xs font-semibold text-slate-400">
-                DELIVERY
+              <Text className="text-center text-lg font-bold text-slate-800">
+                No Active Deliveries
               </Text>
 
-              <Text className="mt-1 text-base text-slate-800">
-                {order.deliveryLocation.address}
+              <Text className="mt-2 text-center text-slate-500">
+                Your active deliveries will appear here.
               </Text>
 
             </View>
+          )}
 
-          </View>
+        {/* ACTIVE DELIVERIES */}
 
-        </View>
-
-        {/* Delivery Progress */}
-        <View className="mx-5 mt-5 rounded-2xl bg-white p-5">
-
-          <Text className="text-lg font-bold text-slate-900">
-            Delivery Progress
-          </Text>
-
-          {/* Step 1 */}
-          <View className="mt-5 flex-row items-center">
-
-            <View className="h-9 w-9 items-center justify-center rounded-full bg-green-100">
-              <Text className="font-bold text-green-600">
-                ✓
-              </Text>
-            </View>
-
-            <View className="ml-4">
-              <Text className="font-semibold text-slate-800">
-                Order Assigned
-              </Text>
-
-              <Text className="text-sm text-slate-400">
-                Driver has received the order
-              </Text>
-            </View>
-
-          </View>
-
-          {/* Step 2 */}
-          <View className="mt-4 flex-row items-center">
+        {!loading &&
+          activeDeliveries.map((delivery) => (
 
             <View
-              className={`h-9 w-9 items-center justify-center rounded-full ${
-                isInTransit || isDelivered
-                  ? "bg-green-100"
-                  : "bg-slate-100"
-              }`}
+              key={delivery._id}
+              className="mb-5 rounded-2xl bg-white p-5"
             >
-              <Text
-                className={
-                  isInTransit || isDelivered
-                    ? "font-bold text-green-600"
-                    : "font-bold text-slate-400"
+
+              {/* STATUS */}
+
+              <View className="flex-row items-center justify-between">
+
+                <View>
+
+                  <Text className="text-xs font-semibold text-slate-400">
+                    CURRENT STATUS
+                  </Text>
+
+                  <Text className="mt-1 text-xl font-bold text-blue-700">
+                    {delivery.status
+                      .replace("_", " ")
+                      .toUpperCase()}
+                  </Text>
+
+                </View>
+
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                  <Text className="text-xl">
+                    🚚
+                  </Text>
+                </View>
+
+              </View>
+
+              {/* ROUTE */}
+
+              <View className="mt-5 border-t border-slate-100 pt-4">
+
+                <Text className="text-xs font-semibold text-slate-400">
+                  ROUTE
+                </Text>
+
+                <Text className="mt-2 text-sm text-slate-700">
+                  📍 {delivery.pickupLocation.address}
+                </Text>
+
+                <Text className="mt-2 text-sm text-slate-700">
+                  📍 {delivery.deliveryLocation.address}
+                </Text>
+
+              </View>
+
+              {/* INFORMATION */}
+
+              <View className="mt-5 flex-row justify-between border-t border-slate-100 pt-4">
+
+                <View>
+
+                  <Text className="text-xs text-slate-400">
+                    DISTANCE
+                  </Text>
+
+                  <Text className="mt-1 font-bold text-slate-800">
+                    {delivery.distance || 0} km
+                  </Text>
+
+                </View>
+
+                <View>
+
+                  <Text className="text-xs text-slate-400">
+                    ETA
+                  </Text>
+
+                  <Text className="mt-1 font-bold text-slate-800">
+                    {delivery.estimatedTime || 0} min
+                  </Text>
+
+                </View>
+
+              </View>
+
+              {/* TRACK BUTTON */}
+
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/(customer)/track-delivery",
+                    params: {
+                      id: delivery._id,
+                    },
+                  })
                 }
+                className="mt-5 rounded-xl bg-blue-700 py-4"
               >
-                {isInTransit || isDelivered ? "✓" : "2"}
-              </Text>
+
+                <Text className="text-center font-bold text-white">
+                  TRACK DELIVERY
+                </Text>
+
+              </Pressable>
+
             </View>
 
-            <View className="ml-4">
-              <Text className="font-semibold text-slate-800">
-                In Transit
-              </Text>
-
-              <Text className="text-sm text-slate-400">
-                Order is on the way
-              </Text>
-            </View>
-
-          </View>
-
-          {/* Step 3 */}
-          <View className="mt-4 flex-row items-center">
-
-            <View
-              className={`h-9 w-9 items-center justify-center rounded-full ${
-                isDelivered
-                  ? "bg-green-100"
-                  : "bg-slate-100"
-              }`}
-            >
-              <Text
-                className={
-                  isDelivered
-                    ? "font-bold text-green-600"
-                    : "font-bold text-slate-400"
-                }
-              >
-                {isDelivered ? "✓" : "3"}
-              </Text>
-            </View>
-
-            <View className="ml-4">
-              <Text className="font-semibold text-slate-800">
-                Delivered
-              </Text>
-
-              <Text className="text-sm text-slate-400">
-                Order delivered to customer
-              </Text>
-            </View>
-
-          </View>
-
-        </View>
-
-        {/* Distance / Time */}
-        <View className="mx-5 mt-5 flex-row gap-3">
-
-          <View className="flex-1 rounded-2xl bg-white p-5">
-
-            <Text className="text-xs text-slate-400">
-              DISTANCE
-            </Text>
-
-            <Text className="mt-2 text-lg font-bold text-slate-800">
-              {order.distance} km
-            </Text>
-
-          </View>
-
-          <View className="flex-1 rounded-2xl bg-white p-5">
-
-            <Text className="text-xs text-slate-400">
-              EST. TIME
-            </Text>
-
-            <Text className="mt-2 text-lg font-bold text-slate-800">
-              {order.estimatedTime} min
-            </Text>
-
-          </View>
-
-        </View>
+          ))}
 
       </ScrollView>
 
