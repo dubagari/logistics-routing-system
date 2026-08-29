@@ -1,131 +1,4 @@
 
-// import {
-//   View,
-//   Text,
-//   Pressable,
-//   ScrollView,
-// } from "react-native";
-
-// import { useRouter } from "expo-router";
-
-// import {
-//   useAppSelector,
-// } from "../../hooks/redux";
-
-// const CustomerDashboard = () => {
-//   const router = useRouter();
-
-//   const { user } = useAppSelector(
-//     (state) => state.auth
-//   );
-
-//   return (
-//     <View className="flex-1 bg-slate-100">
-
-//       {/* HEADER */}
-//       <View className="bg-blue-700 px-5 pb-7 pt-14">
-
-//         <Text className="text-sm text-blue-100">
-//           Welcome back
-//         </Text>
-
-//         <Text className="mt-1 text-2xl font-bold text-white">
-//           {user?.name || "Customer"}
-//         </Text>
-
-//         <Text className="mt-1 text-blue-100">
-//           Manage your deliveries
-//         </Text>
-
-//       </View>
-
-//       <ScrollView
-//         className="flex-1"
-//         contentContainerStyle={{
-//           padding: 20,
-//           paddingBottom: 40,
-//         }}
-//         showsVerticalScrollIndicator={false}
-//       >
-
-//         {/* CREATE DELIVERY */}
-//         <Pressable
-//           onPress={() =>
-//             router.push(
-//               "/(customer)/create-delivery"
-//             )
-//           }
-//           className="rounded-2xl bg-white p-5"
-//         >
-
-//           <View className="flex-row items-center justify-between">
-
-//             <View className="flex-1">
-
-//               <Text className="text-xl font-bold text-slate-900">
-//                 Create a Delivery
-//               </Text>
-
-//               <Text className="mt-1 text-sm text-slate-500">
-//                 Send a package to another location
-//               </Text>
-
-//             </View>
-
-//             <View className="rounded-full bg-blue-100 px-4 py-3">
-//               <Text className="text-xl">
-//                 +
-//               </Text>
-//             </View>
-
-//           </View>
-
-//         </Pressable>
-
-//         {/* ACTIVE DELIVERIES */}
-//         <View className="mt-6">
-
-//           <Text className="text-lg font-bold text-slate-900">
-//             Active Deliveries
-//           </Text>
-
-//           <View className="mt-3 rounded-2xl bg-white p-5">
-
-//             <Text className="text-center text-slate-500">
-//               No active deliveries
-//             </Text>
-
-//           </View>
-
-//         </View>
-
-//         {/* RECENT DELIVERIES */}
-//         <View className="mt-6">
-
-//           <Text className="text-lg font-bold text-slate-900">
-//             Recent Deliveries
-//           </Text>
-
-//           <View className="mt-3 rounded-2xl bg-white p-5">
-
-//             <Text className="text-center text-slate-500">
-//               No recent deliveries
-//             </Text>
-
-//           </View>
-
-//         </View>
-
-//       </ScrollView>
-
-//     </View>
-//   );
-// };
-
-// export default CustomerDashboard;
-
-
-
 import {
   View,
   Text,
@@ -134,18 +7,35 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 
 import {
   useAppSelector,
+  useAppDispatch
 } from "../../hooks/redux";
 
-const CustomerDashboard = () => {
-  const router = useRouter();
+import {
+  fetchCustomerDeliveries,
+} from "../../store/slices/deliverySlice";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-  const { user } = useAppSelector(
-    (state) => state.auth
-  );
+const CustomerDashboard = () => {
+
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+const { user, token } = useAppSelector(
+  (state) => state.auth
+);
+
+useEffect(() => {
+  if (token) {
+    dispatch(
+      fetchCustomerDeliveries(token)
+    );
+  }
+}, [token]);
 
   const {
     deliveries,
@@ -264,7 +154,17 @@ const CustomerDashboard = () => {
   };
 
   return (
-    <View className="flex-1 bg-slate-100">
+     <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+        contentContainerStyle={{
+          padding: 0,
+          paddingBottom: 50,
+        }}
+      >
 
       {/* ====================================== */}
       {/* HEADER */}
@@ -526,79 +426,147 @@ const CustomerDashboard = () => {
 
         </View>
 
-        {/* ==================================== */}
-        {/* RECENT DELIVERIES */}
-        {/* ==================================== */}
+      {/* ==================================== */}
+{/* RECENT DELIVERIES */}
+{/* ==================================== */}
 
-        <View className="mt-6">
+<View className="mt-6">
 
-          <Text className="text-lg font-bold text-slate-900">
-            Recent Deliveries
-          </Text>
+  <View className="flex-row items-center justify-between">
 
-          {recentDeliveries.length === 0 ? (
+    <Text className="text-lg font-bold text-slate-900">
+      Recent Deliveries
+    </Text>
 
-            <View className="mt-3 rounded-2xl bg-white p-5">
+    {recentDeliveries.length > 0 && (
+      <Text className="text-sm font-semibold text-blue-700">
+        {recentDeliveries.length}
+      </Text>
+    )}
 
-              <Text className="text-center text-slate-500">
-                No recent deliveries
+  </View>
+
+  {recentDeliveries.length === 0 ? (
+
+    <View className="mt-3 rounded-2xl bg-white p-5">
+
+      <Text className="text-center text-slate-500">
+        No recent deliveries
+      </Text>
+
+    </View>
+
+  ) : (
+
+    recentDeliveries
+      .slice(0, 3)
+      .map((delivery) => {
+
+        const statusStyle =
+          getStatusStyle(delivery.status);
+
+        return (
+          <Pressable
+            key={delivery._id}
+            onPress={() =>
+              router.push(`/(customer)/create/${delivery._id}`)
+            }
+            className="mt-3 rounded-2xl bg-white p-5"
+          >
+
+            {/* Header */}
+
+            <View className="flex-row items-start justify-between">
+
+              <View className="flex-1">
+
+                <Text className="text-base font-bold text-slate-900">
+                  Delivery #{delivery._id.slice(-6)}
+                </Text>
+
+                <Text className="mt-1 text-xs text-slate-400">
+                  {delivery.packageDescription}
+                </Text>
+
+              </View>
+
+              <View
+                className={`rounded-full px-3 py-1 ${statusStyle.container}`}
+              >
+
+                <Text
+                  className={`text-xs font-bold ${statusStyle.text}`}
+                >
+                  {getStatusLabel(
+                    delivery.status
+                  )}
+                </Text>
+
+              </View>
+
+            </View>
+
+            {/* Destination */}
+
+            <View className="mt-4 border-t border-slate-100 pt-4">
+
+              <Text className="text-xs font-semibold text-slate-400">
+                DELIVERED TO
+              </Text>
+
+              <Text className="mt-2 text-sm text-slate-700">
+                📍 {delivery.deliveryLocation.address}
               </Text>
 
             </View>
 
-          ) : (
+            {/* Information */}
 
-            recentDeliveries
-              .slice(0, 3)
-              .map((delivery) => (
+            <View className="mt-4 flex-row justify-between">
 
-                <Pressable
-                  key={delivery._id}
-                  onPress={() =>
-                    router.push({
-                      pathname:
-                        "/(customer)/track-delivery",
-                      params: {
-                        id: delivery._id,
-                      },
-                    })
-                  }
-                  className="mt-3 rounded-2xl bg-white p-5"
-                >
+              <View>
 
-                  <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-slate-400">
+                  DISTANCE
+                </Text>
 
-                    <View className="flex-1">
+                <Text className="mt-1 font-semibold text-slate-800">
+                  {delivery.distance || 0} km
+                </Text>
 
-                      <Text className="font-bold text-slate-900">
-                        Delivery #{delivery._id.slice(-6)}
-                      </Text>
+              </View>
 
-                      <Text className="mt-1 text-sm text-slate-500">
-                        {delivery.deliveryLocation.address}
-                      </Text>
+              <View>
 
-                    </View>
+                <Text className="text-xs text-slate-400">
+                  AMOUNT
+                </Text>
 
-                    <Text className="text-xs font-bold text-green-600">
-                      {getStatusLabel(
-                        delivery.status
-                      )}
-                    </Text>
+                          </View>
 
-                  </View>
+            </View>
 
-                </Pressable>
+            {/* View */}
 
-              ))
+            <View className="mt-4">
 
-          )}
+              <Text className="text-center text-sm font-bold text-blue-700">
+                VIEW ORDER →
+              </Text>
 
-        </View>
+            </View>
+
+          </Pressable>
+        );
+      })
+
+  )}
+
+</View>
 
       </ScrollView>
 
-    </View>
+    </KeyboardAwareScrollView>
   );
 };
 
