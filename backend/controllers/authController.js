@@ -69,25 +69,11 @@ export const register = async (req, res) => {
     }
 
     // ----------------------------------------
-    // Validate role
+    // Public registration is Customer only
     // ----------------------------------------
 
-    const allowedRoles = [ "customer","driver","admin",];
-
-    const selectedRole =
-      role || "customer";
-
-    if (
-      !allowedRoles.includes(
-        selectedRole
-      )
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user role",
-      });
-    }
-
+    const selectedRole = "customer";
+    
     // ----------------------------------------
     // Hash password
     // ----------------------------------------
@@ -110,12 +96,7 @@ export const register = async (req, res) => {
       role: selectedRole,
     });
 
-    // ----------------------------------------
-    // Generate token
-    // ----------------------------------------
-
-    const token =
-      generateToken(user._id);
+  
 
     // ----------------------------------------
     // Response
@@ -126,7 +107,7 @@ export const register = async (req, res) => {
       message:
         "User registered successfully",
 
-      token,
+    
 
       user: {
         _id: user._id,
@@ -156,17 +137,14 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const {
-      email,
-      password,
-    } = req.body;
+    const {      email,      password,    } = req.body;
 
     // ----------------------------------------
     // Validate
     // ----------------------------------------
 
     if (!email || !password) {
-      return res.status(400).json({
+            return res.status(400).json({
         success: false,
         message:
           "Email and password are required",
@@ -250,6 +228,39 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error(
       "Login error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+// ========================================
+// Admin - Get All Customers
+// ========================================
+
+export const getAllCustomers = async (req, res) => {
+  try {
+    const customers = await User.find({
+      role: "customer",
+    })
+      .select("-password")
+      .sort({
+        createdAt: -1,
+      });
+
+    return res.json({
+      success: true,
+      count: customers.length,
+      customers,
+    });
+  } catch (error) {
+    console.error(
+      "Get all customers error:",
       error
     );
 

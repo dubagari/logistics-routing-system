@@ -1442,62 +1442,6 @@ export const getDriverDeliveries = async (req, res) => {
   }
 };
 
-// ========================================
-// Admin - Delivery Statistics
-// ========================================
-
-export const getDeliveryStats = async (req, res) => {
-  try {
-    const [
-      total,
-      pending,
-      assigned,
-      accepted,
-      inTransit,
-      delivered,
-      cancelled,
-    ] = await Promise.all([
-      Delivery.countDocuments(),
-
-      Delivery.countDocuments({status: "pending",}),
-
-      Delivery.countDocuments({status: "assigned",}),
-
-      Delivery.countDocuments({status: "accepted",}),
-
-      Delivery.countDocuments({status: "in_transit",}),
-      
-      Delivery.countDocuments({status: "cancelled",}),
-      
-      Delivery.countDocuments({status: "delivered",}),
-
-    ]);
-
-    return res.json({
-      success: true,
-      stats: {
-        total,
-        pending,
-        assigned,
-        accepted,
-        in_transit: inTransit,
-        delivered,
-        cancelled,
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Get delivery stats error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
-
 export const getDeliveryNavigation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -2096,3 +2040,36 @@ export const selectDeliveryRoute = async (req, res) => {
   }
 };
 
+// ========================================
+// Admin - Delivery Statistics
+// ========================================
+export const getDeliveryStats = async (req, res) => {
+  try {
+    const total = await Delivery.countDocuments();
+    const pending = await Delivery.countDocuments({ status: "pending" });
+    const assigned = await Delivery.countDocuments({ status: "assigned" });
+    const accepted = await Delivery.countDocuments({ status: "accepted" });
+    const in_transit = await Delivery.countDocuments({ status: "in_transit" });
+    const delivered = await Delivery.countDocuments({ status: "delivered" });
+    const cancelled = await Delivery.countDocuments({ status: "cancelled" });
+
+    return res.json({
+      success: true,
+      stats: {
+        total,
+        pending,
+        assigned,
+        accepted,
+        in_transit,
+        delivered,
+        cancelled,
+      },
+    });
+  } catch (error) {
+    console.error("Get delivery stats error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

@@ -6,7 +6,7 @@ import {
   View,
 } from "react-native";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 
 import {
@@ -28,19 +28,32 @@ const CustomerTracking = () => {
 
   const {
     deliveries,
-    loading,
     error,
   } = useAppSelector(
     (state) => state.deliveries
   );
 
-  useEffect(() => {
-    if (token) {
-      dispatch(
-        fetchCustomerDeliveries(token)
-      );
-    }
-  }, [token, dispatch]);
+  const [trackingId, setTrackingId] =  useState<string | null>(null);
+
+  const [initialLoading, setInitialLoading] =  useState(true);
+
+  
+
+ useEffect(() => {
+  if (!token) return;
+
+  const loadDeliveries = async () => {
+    setInitialLoading(true);
+
+    await dispatch(
+      fetchCustomerDeliveries(token)
+    );
+
+    setInitialLoading(false);
+  };
+
+  loadDeliveries();
+}, [token, dispatch]);
 
   const activeDeliveries =
     deliveries.filter(
@@ -77,7 +90,7 @@ const CustomerTracking = () => {
 
         {/* LOADING */}
 
-        {loading && (
+     {initialLoading && (
           <View className="items-center py-10">
 
             <ActivityIndicator
@@ -94,7 +107,7 @@ const CustomerTracking = () => {
 
         {/* ERROR */}
 
-        {!loading && error && (
+       {!initialLoading && error && (
           <View className="rounded-2xl bg-red-50 p-5">
 
             <Text className="text-center font-semibold text-red-600">
@@ -106,9 +119,9 @@ const CustomerTracking = () => {
 
         {/* NO ACTIVE DELIVERY */}
 
-        {!loading &&
-          !error &&
-          activeDeliveries.length === 0 && (
+        {!initialLoading &&
+  !error &&
+  activeDeliveries.length === 0 && (
             <View className="rounded-2xl bg-white p-8">
 
               <Text className="text-center text-lg font-bold text-slate-800">
@@ -124,8 +137,8 @@ const CustomerTracking = () => {
 
         {/* ACTIVE DELIVERIES */}
 
-        {!loading &&
-          activeDeliveries.map((delivery) => (
+       {!initialLoading &&
+  activeDeliveries.map((delivery) => (
 
             <View
               key={delivery._id}
@@ -208,24 +221,30 @@ const CustomerTracking = () => {
 
               {/* TRACK BUTTON */}
 
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname:
-                      "/(customer)/track-delivery",
-                    params: {
-                      id: delivery._id,
-                    },
-                  })
-                }
-                className="mt-5 rounded-xl bg-blue-700 py-4"
-              >
+    <Pressable
+  onPress={() => {
+    setTrackingId(delivery._id);
 
-                <Text className="text-center font-bold text-white">
-                  TRACK DELIVERY
-                </Text>
-
-              </Pressable>
+    setTimeout(() => {
+      router.push({
+        pathname: "/(customer)/track-delivery",
+        params: {
+          id: delivery._id,
+        },
+      });
+    }, 300);
+  }}
+  disabled={trackingId === delivery._id}
+  className="mt-5 rounded-xl bg-blue-700 py-4"
+>
+  {trackingId === delivery._id ? (
+    <ActivityIndicator color="#ffffff" />
+  ) : (
+    <Text className="text-center font-bold text-white">
+      TRACK DELIVERY
+    </Text>
+  )}
+</Pressable>
 
             </View>
 

@@ -7,13 +7,18 @@ import {
   View,
 } from "react-native";
 
+import MapView, {
+  Marker,
+  Polyline,
+} from "react-native-maps";
+
 import {
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
 
 import {
-  useEffect,
+  useEffect,useMemo,useRef,useState
 } from "react";
 
 import {
@@ -29,6 +34,11 @@ const TrackDelivery = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  const [initialLoading, setInitialLoading] =
+    useState(true);
+
+  const mapRef =
+    useRef<MapView | null>(null);
   const { id } =
     useLocalSearchParams<{ id: string }>();
 
@@ -38,7 +48,6 @@ const TrackDelivery = () => {
 
   const {
     deliveries,
-    loading,
     error,
   } = useAppSelector(
     (state) => state.deliveries
@@ -56,46 +65,163 @@ const TrackDelivery = () => {
   // FETCH DELIVERY
   // ============================================
 
-  useEffect(() => {
-    if (!token || !id) return;
+useEffect(() => {
+  if (!token || !id) return;
 
-    // If delivery is already in Redux,
-    // no need to request it again.
-    if (delivery) return;
+  let interval: ReturnType<typeof setInterval> | null = null;
 
-    dispatch(
+  const fetchDelivery = async () => {
+    setInitialLoading(true);
+
+    const result = await dispatch(
       getCustomerDeliveryByIdThunk({
         id,
         token,
       })
     );
-  }, [
-    id,
-    token,
-    delivery,
-    dispatch,
-  ]);
+
+    setInitialLoading(false);
+
+    // Stop polling if delivery is finished
+    if (
+      getCustomerDeliveryByIdThunk.fulfilled.match(result) &&
+      (result.payload.status === "delivered" ||
+        result.payload.status === "cancelled")
+    ) {
+      return;
+    }
+
+    interval = setInterval(() => {
+      dispatch(
+        getCustomerDeliveryByIdThunk({
+          id,
+          token,
+        })
+      );
+    }, 5000);
+  };
+
+  fetchDelivery();
+
+  return () => {
+    if (interval) {
+      clearInterval(interval);
+    }
+  };
+}, [id, token, dispatch]);
+
+// ============================================
+// ROUTE COORDINATES
+// ============================================
+
+const routeCoordinates = useMemo(() => {
+  const coordinates =
+    delivery?.routes?.[0]?.geometry?.coordinates;
+
+  if (!coordinates || coordinates.length === 0) {
+    return [];
+  }
+
+  // Backend/GeoJSON format:
+  // [longitude, latitude]
+
+  return coordinates.map(
+    ([longitude, latitude]) => ({
+      latitude,
+      longitude,
+    })
+  );
+}, [delivery?.routes]);
+
+// ============================================
+// PICKUP
+// ============================================
+
+const pickupCoordinate = {
+  latitude: delivery?.pickupLocation?.latitude || 0,
+  longitude: delivery?.pickupLocation?.longitude || 0,
+};
+
+// ============================================
+// DESTINATION
+// ============================================
+
+const destinationCoordinate = {
+  latitude: delivery?.deliveryLocation?.latitude || 0,
+  longitude: delivery?.deliveryLocation?.longitude || 0,
+};
+
+// ============================================
+// DRIVER LOCATION
+// ============================================
+
+const driverCoordinate =
+  delivery?.currentLocation?.latitude != null &&
+  delivery?.currentLocation?.longitude != null
+    ? {
+        latitude: delivery.currentLocation.latitude,
+        longitude: delivery.currentLocation.longitude,
+      }
+    : null;
+
+useEffect(() => {
+  if (!mapRef.current) return;
+
+  if (driverCoordinate) {
+    mapRef.current.animateToRegion(
+      {
+        latitude: driverCoordinate.latitude,
+        longitude: driverCoordinate.longitude,
+        latitudeDelta: 0.08,
+        longitudeDelta: 0.08,
+      },
+      800
+    );
+
+    return;
+  }
+
+  if (routeCoordinates.length > 0) {
+    mapRef.current.fitToCoordinates(
+      routeCoordinates,
+      {
+        edgePadding: {
+          top: 50,
+          right: 50,
+          bottom: 50,
+          left: 50,
+        },
+        animated: true,
+      }
+    );
+  }
+}, [
+  driverCoordinate,
+  routeCoordinates,
+]);
+
+
+
 
   // ============================================
   // LOADING
   // ============================================
+if (initialLoading) {
+  return (
+    <View className="flex-1 items-center justify-center bg-slate-100">
 
-  if (loading && !delivery) {
-    return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
+      <ActivityIndicator
+        size="large"
+        color="#1d4ed8"
+      />
 
-        <ActivityIndicator
-          size="large"
-          color="#1d4ed8"
-        />
+      <Text className="mt-3 text-slate-500">
+        Loading delivery...
+      </Text>
 
-        <Text className="mt-3 text-slate-500">
-          Loading delivery...
-        </Text>
-
-      </View>
-    );
-  }
+    </View>
+  );
+}
 
   // ============================================
   // DELIVERY NOT FOUND
@@ -151,31 +277,20 @@ const TrackDelivery = () => {
   // PROGRESS
   // ============================================
 
-  const totalDistance =
-    Number(delivery.distance || 0);
 
-  const estimatedTime =
-    Number(
-      delivery.estimatedTime || 0
-    );
+const remainingDistance = Number(
+  delivery.distance || 0
+);
 
-  const remainingDistance =
-    isDelivered
-      ? 0
-      : totalDistance;
+const remainingTime = Number(
+  delivery.estimatedTime || 0
+);
 
-  const remainingTime =
-    isDelivered
-      ? 0
-      : estimatedTime;
+let progress = 0;
 
-  const progress =
-    isDelivered
-      ? 100
-      : isInTransit
-        ? 50
-        : 0;
-
+if (isDelivered) {
+  progress = 100;
+}
   return (
     <View className="flex-1 bg-slate-100">
 
@@ -215,42 +330,129 @@ const TrackDelivery = () => {
         }}
       >
 
-        {/* ==================================== */}
-        {/* MAP */}
-        {/* ==================================== */}
+     {/* ==================================== */}
+{/* MAP */}
+{/* ==================================== */}
 
-        <View className="overflow-hidden rounded-2xl bg-white">
+<View className="overflow-hidden rounded-2xl bg-white">
 
-          <View className="h-72 items-center justify-center bg-slate-200">
+  <MapView
+    ref={mapRef}
+    style={{
+    width: "100%",
+    height: 320,
+  }}
+    initialRegion={{
+      latitude:
+        delivery.pickupLocation.latitude,
+      longitude:
+        delivery.pickupLocation.longitude,
+      latitudeDelta: 0.12,
+      longitudeDelta: 0.12,
+    }}
+    showsUserLocation={false}
+    showsMyLocationButton={false}
+    showsCompass={true}
+    loadingEnabled={true}
+  >
 
-            <Text className="text-4xl">
-              🗺️
-            </Text>
+    {/* ====================================== */}
+    {/* ROUTE */}
+    {/* ====================================== */}
 
-            <Text className="mt-3 text-lg font-bold text-slate-700">
-              Live Map
-            </Text>
+    {routeCoordinates.length > 0 && (
+      <Polyline
+        coordinates={routeCoordinates}
+        strokeWidth={5}
+      />
+    )}
 
-            <Text className="mt-1 px-10 text-center text-sm text-slate-500">
-              Driver location and delivery route
-              will appear here.
-            </Text>
+    {/* ====================================== */}
+    {/* PICKUP */}
+    {/* ====================================== */}
 
-            {/* CURRENT DRIVER LOCATION */}
+    <Marker
+      coordinate={pickupCoordinate}
+      title="Pickup"
+      description={
+        delivery.pickupLocation.address
+      }
+    >
+      <View className="h-8 w-8 items-center justify-center rounded-full bg-green-600">
+        <Text className="text-base">
+          📦
+        </Text>
+      </View>
+    </Marker>
 
-            {delivery.currentLocation?.latitude != null &&
-              delivery.currentLocation?.longitude != null && (
-                <Text className="mt-3 text-xs text-slate-500">
-                  Driver:{" "}
-                  {delivery.currentLocation.latitude.toFixed(5)}
-                  ,{" "}
-                  {delivery.currentLocation.longitude.toFixed(5)}
-                </Text>
-              )}
+    {/* ====================================== */}
+    {/* DESTINATION */}
+    {/* ====================================== */}
 
-          </View>
+    <Marker
+      coordinate={destinationCoordinate}
+      title="Destination"
+      description={
+        delivery.deliveryLocation.address
+      }
+    >
+      <View className="h-8 w-8 items-center justify-center rounded-full bg-red-600">
+        <Text className="text-base">
+          🏁
+        </Text>
+      </View>
+    </Marker>
 
+    {/* ====================================== */}
+    {/* DRIVER */}
+    {/* ====================================== */}
+
+    {driverCoordinate && (
+      <Marker
+        coordinate={driverCoordinate}
+        title="Driver"
+        description={
+          typeof delivery.driver === "object" &&
+          delivery.driver
+            ? delivery.driver.name
+            : "Your driver"
+        }
+        anchor={{
+          x: 0.5,
+          y: 0.5,
+        }}
+      >
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-700">
+          <Text className="text-xl">
+            🚚
+          </Text>
         </View>
+      </Marker>
+    )}
+
+  </MapView>
+
+  {/* ====================================== */}
+  {/* MAP STATUS */}
+  {/* ====================================== */}
+
+  <View className="absolute left-4 top-4 rounded-xl bg-white px-4 py-2 shadow">
+
+    <Text className="text-xs font-semibold text-slate-400">
+      LIVE STATUS
+    </Text>
+
+    <Text className="mt-1 font-bold text-blue-700">
+      {delivery.status === "in_transit"
+        ? "Driver is on the way"
+        : delivery.status
+            .replace("_", " ")
+            .toUpperCase()}
+    </Text>
+
+  </View>
+
+</View>
 
         {/* ==================================== */}
         {/* STATUS */}

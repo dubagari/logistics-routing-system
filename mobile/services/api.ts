@@ -1,4 +1,7 @@
-const API_URL = "http://10.198.191.176:5000/api";
+import { logout } from "@/store/slices/authSlice";
+import { store } from "@/store/store";
+
+const API_URL = "http://10.47.51.176:5000/api";
 
 export const apiRequest = async (
   endpoint: string,
@@ -26,10 +29,6 @@ export const apiRequest = async (
     console.log("API STATUS:", response.status);
     console.log("API CONTENT TYPE:", contentType);
 
-    // ----------------------------------------
-    // Read response safely
-    // ----------------------------------------
-
     const text = await response.text();
 
     console.log("API RAW RESPONSE:", text);
@@ -50,15 +49,24 @@ export const apiRequest = async (
       );
     }
 
-    // ----------------------------------------
-    // Handle API errors
-    // ----------------------------------------
+    // Account was deactivated by admin
+    if (
+      response.status === 403 &&
+      data?.message === "Your account is inactive"
+    ) {
+      store.dispatch(logout());
+    }
 
     if (!response.ok) {
-      throw new Error(
+      const error: any = new Error(
         data?.message ||
           `Request failed with status ${response.status}`
       );
+
+      error.status = response.status;
+      error.data = data;
+
+      throw error;
     }
 
     return data;

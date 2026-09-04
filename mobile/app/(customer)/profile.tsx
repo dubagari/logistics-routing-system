@@ -1,17 +1,19 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {  Pressable,  ScrollView,  Text,  View,} from "react-native";
+
 import { useRouter } from "expo-router";
 
-const CustomerProfile = () => {
-  const router = useRouter();
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 
-  // Temporary customer data.
-  // This will come from authentication/backend later.
-  const customer = {
-    name: "Abubakar Ali",
-    email: "abubakar@example.com",
-    phone: "08012345678",
-    address: "Abuja, Nigeria",
-  };
+import { logout } from "../../store/slices/authSlice";
+
+
+const CustomerProfile = () => {
+
+const router = useRouter();
+
+const { user } = useAppSelector( (state) => state.auth);
+
+const dispatch = useAppDispatch();
 
   return (
     <View className="flex-1 bg-slate-100">
@@ -55,7 +57,7 @@ const CustomerProfile = () => {
           </View>
 
           <Text className="mt-4 text-xl font-bold text-slate-900">
-            {customer.name}
+            {user?.name}
           </Text>
 
           <Text className="mt-1 text-sm text-slate-500">
@@ -78,7 +80,7 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base font-semibold text-slate-800">
-              {customer.name}
+              {user?.name}
             </Text>
 
           </View>
@@ -90,7 +92,7 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base text-slate-800">
-              {customer.email}
+              {user?.email}
             </Text>
 
           </View>
@@ -102,19 +104,7 @@ const CustomerProfile = () => {
             </Text>
 
             <Text className="mt-1 text-base text-slate-800">
-              📞 {customer.phone}
-            </Text>
-
-          </View>
-
-          <View className="mt-4">
-
-            <Text className="text-xs font-semibold text-slate-400">
-              ADDRESS
-            </Text>
-
-            <Text className="mt-1 text-base text-slate-800">
-              📍 {customer.address}
+              📞 {user?.phone || "Not provided"}
             </Text>
 
           </View>
@@ -143,7 +133,9 @@ const CustomerProfile = () => {
           </Pressable>
 
           <Pressable
-            onPress={() => {}}
+            onPress={() => {dispatch(logout());
+            router.replace("/login");
+          }}
             className="mt-3 rounded-xl border border-red-200 bg-red-50 py-4"
           >
             <Text className="text-center font-bold text-red-600">

@@ -1,4 +1,6 @@
 import Driver from "../models/Driver.js";
+import Delivery from "../models/Delivery.js";
+import User from "../models/User.js";
 
 // ========================================
 // Create Driver Profile
@@ -526,96 +528,132 @@ export const updateDriverStatus =
 // Update Driver GPS Location
 // ========================================
 
-export const updateDriverLocation =
-  async (req, res) => {
-    try {
-      const {
-        latitude,
-        longitude,
-      } = req.body;
+export const updateDriverLocation = async (req, res) => {
+  try {
+    const {
+      latitude,
+      longitude,
+    } = req.body;
 
-      // ----------------------------------------
-      // Convert to numbers
-      // ----------------------------------------
+    // ----------------------------------------
+    // Convert to numbers
+    // ----------------------------------------
 
-      const lat =
-        Number(latitude);
+    const lat = Number(latitude);
+    const lng = Number(longitude);
 
-      const lng =
-        Number(longitude);
+    // ----------------------------------------
+    // Validate coordinates
+    // ----------------------------------------
 
-      // ----------------------------------------
-      // Validate coordinates
-      // ----------------------------------------
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Valid latitude and longitude are required",
+      });
+    }
 
-      if (
-        latitude === undefined ||
-        longitude === undefined ||
-        !Number.isFinite(lat) ||
-        !Number.isFinite(lng) ||
-        lat < -90 ||
-        lat > 90 ||
-        lng < -180 ||
-        lng > 180
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Valid latitude and longitude are required",
-        });
-      }
+    // ----------------------------------------
+    // Find Driver
+    // ----------------------------------------
 
-      // ----------------------------------------
-      // Find Driver
-      // ----------------------------------------
+    const driver = await Driver.findOne({
+      user: req.user._id,
+    });
 
-      const driver =
-        await Driver.findOne({
-          user: req.user._id,
-        });
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Driver profile not found",
+      });
+    }
 
-      if (!driver) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Driver profile not found",
-        });
-      }
+    // ----------------------------------------
+    // Find active delivery
+    // ----------------------------------------
 
-      // ----------------------------------------
-      // Update Location
-      // ----------------------------------------
+    const delivery = await Delivery.findOne({
+      driver: req.user._id,
+      status: "in_transit",
+    });
 
-      const updatedAt =
-        new Date();
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "No active delivery found",
+      });
+    }
 
-      driver.currentLocation = {
+    // ----------------------------------------
+    // Update timestamp
+    // ----------------------------------------
+
+    const updatedAt = new Date();
+
+    // ----------------------------------------
+    // Update Driver Location
+    // ----------------------------------------
+
+    driver.currentLocation = {
+      latitude: lat,
+      longitude: lng,
+      updatedAt,
+    };
+
+    await driver.save();
+
+    // ----------------------------------------
+    // Update Delivery Location
+    // ----------------------------------------
+
+    delivery.currentLocation = {
+      latitude: lat,
+      longitude: lng,
+      updatedAt,
+    };
+
+    await delivery.save();
+
+    // ----------------------------------------
+    // Response
+    // ----------------------------------------
+
+    return res.json({
+      success: true,
+      message:
+        "Driver location updated successfully",
+
+      location: {
         latitude: lat,
         longitude: lng,
         updatedAt,
-      };
+      },
+    });
 
-      await driver.save();
+  } catch (error) {
+    console.error(
+      "Update driver location error:",
+      error
+    );
 
-      return res.json({
-        success: true,
-        message:
-          "Driver location updated successfully",
-        location:
-          driver.currentLocation,
-      });
-    } catch (error) {
-      console.error(
-        "Update driver location error:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "Server error",
-      });
-    }
-  };
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
 
   // ========================================
 // Admin - Get All Drivers
@@ -638,6 +676,253 @@ export const getAllDrivers = async (req, res) => {
       "Get all drivers error:",
       error
     );
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ========================================
+// Admin - Update Driver
+// ========================================
+
+export const updateDriverByAdmin = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      name,
+      email,
+      phone,
+      licenseNumber,
+      vehicleType,
+      vehicleNumber,
+      vehicleModel,
+      isActive,
+    } = req.body;
+
+    // ----------------------------------------
+    // Find Driver
+    // ----------------------------------------
+
+    const driver = await Driver.findById(id)
+      .populate("user");
+
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message: "Driver not found",
+      });
+    }
+
+    // ----------------------------------------
+    // Update User Information
+    // ----------------------------------------
+
+    if (name !== undefined) {
+      driver.user.name = name;
+    }
+
+    if (email !== undefined) {
+      driver.user.email = email.toLowerCase();
+    }
+
+    if (phone !== undefined) {
+      driver.user.phone = phone;
+    }
+
+    if (typeof isActive === "boolean") {
+      driver.user.isActive = isActive;
+    }
+
+    await driver.user.save();
+
+    // ----------------------------------------
+    // Check License Number
+    // ----------------------------------------
+
+    if (
+      licenseNumber &&
+      licenseNumber !== driver.licenseNumber
+    ) {
+      const existingLicense =
+        await Driver.findOne({
+          licenseNumber,
+          _id: { $ne: driver._id },
+        });
+
+      if (existingLicense) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "License number is already registered",
+        });
+      }
+
+      driver.licenseNumber = licenseNumber;
+    }
+
+    // ----------------------------------------
+    // Check Vehicle Number
+    // ----------------------------------------
+
+    if (
+      vehicleNumber &&
+      vehicleNumber !== driver.vehicleNumber
+    ) {
+      const existingVehicle =
+        await Driver.findOne({
+          vehicleNumber,
+          _id: { $ne: driver._id },
+        });
+
+      if (existingVehicle) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Vehicle number is already registered",
+        });
+      }
+
+      driver.vehicleNumber = vehicleNumber;
+    }
+
+    // ----------------------------------------
+    // Update Driver Information
+    // ----------------------------------------
+
+    if (vehicleType !== undefined) {
+      driver.vehicleType = vehicleType;
+    }
+
+    if (vehicleModel !== undefined) {
+      driver.vehicleModel = vehicleModel;
+    }
+
+    await driver.save();
+
+    // ----------------------------------------
+    // Get Updated Driver
+    // ----------------------------------------
+
+    const updatedDriver =
+      await Driver.findById(driver._id)
+        .populate("user", "-password");
+
+    return res.json({
+      success: true,
+      message:
+        "Driver updated successfully",
+      driver: updatedDriver,
+    });
+  } catch (error) {
+    console.error(
+      "Admin update driver error:",
+      error
+    );
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email, license number or vehicle number already exists",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const createDriverByAdmin = async (req, res) => {
+  try {
+    const {   name, email,phone,password,licenseNumber,vehicleType, vehicleNumber, vehicleModel,    } = req.body;
+
+    // Validate required fields
+    if ( !name || !email || !phone || !password || !licenseNumber || !vehicleType || !vehicleNumber ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "A user with this email already exists",
+      });
+    }
+
+    // Check driver license
+    const existingLicense = await Driver.findOne({
+      licenseNumber,
+    });
+
+    if (existingLicense) {
+      return res.status(400).json({
+        success: false,
+        message: "License number already exists",
+      });
+    }
+
+    // Check vehicle number
+    const existingVehicle = await Driver.findOne({
+      vehicleNumber,
+    });
+
+    if (existingVehicle) {
+      return res.status(400).json({
+        success: false,
+        message: "Vehicle number already exists",
+      });
+    }
+
+    // Create user account
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      phone,
+      password,
+      role: "driver",
+      isActive: true,
+    });
+
+    // Create driver profile
+    const driver = await Driver.create({
+      user: user._id,
+      licenseNumber,
+      vehicleType,
+      vehicleNumber,
+      vehicleModel: vehicleModel || "",
+      isAvailable: true,
+      status: "available",
+    });
+
+    // Populate user information
+    await driver.populate({
+      path: "user",
+      select: "-password",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Driver created successfully",
+      driver,
+    });
+  } catch (error) {
+    console.error("Create driver by admin error:", error);
 
     return res.status(500).json({
       success: false,

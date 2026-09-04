@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 
 import {
@@ -25,17 +25,17 @@ const CustomerDashboard = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  const [trackingId, setTrackingId] = useState<string | null>(null);
+
 const { user, token } = useAppSelector(
   (state) => state.auth
 );
 
 useEffect(() => {
-  if (token) {
-    dispatch(
-      fetchCustomerDeliveries(token)
-    );
-  }
-}, [token]);
+  if (!token) return;
+
+  dispatch(fetchCustomerDeliveries(token));
+}, [token, dispatch]);
 
   const {
     deliveries,
@@ -162,7 +162,7 @@ useEffect(() => {
         extraScrollHeight={20}
         contentContainerStyle={{
           padding: 0,
-          paddingBottom: 50,
+          paddingBottom: 80,
         }}
       >
 
@@ -186,13 +186,12 @@ useEffect(() => {
 
       </View>
 
-      <ScrollView
+      <View
         className="flex-1"
-        contentContainerStyle={{
-          padding: 20,
-          paddingBottom: 40,
+         style={{
+          padding: 10,
+          paddingBottom: 80,
         }}
-        showsVerticalScrollIndicator={false}
       >
 
         {/* ==================================== */}
@@ -254,8 +253,8 @@ useEffect(() => {
 
           </View>
 
-          {loading ? (
-
+          {loading && deliveries.length === 0 ? (
+            
             <View className="mt-3 items-center rounded-2xl bg-white p-6">
 
               <ActivityIndicator
@@ -398,25 +397,33 @@ useEffect(() => {
 
                     {/* ACTION */}
 
-                    <Pressable
-                      onPress={() =>
-                        router.push({
-                          pathname:
-                            "/(customer)/track-delivery",
-                          params: {
-                            id: delivery._id,
-                          },
-                        })
-                      }
-                      className="mt-5 rounded-xl bg-blue-700 py-3"
-                    >
+                   
+<Pressable
+  onPress={() => {
+    setTrackingId(delivery._id);
 
-                      <Text className="text-center font-bold text-white">
-                        TRACK DELIVERY
-                      </Text>
+    setTimeout(() => {
+      router.push({
+        pathname: "/(customer)/track-delivery",
+        params: {
+          id: delivery._id,
+        },
+      });
 
-                    </Pressable>
-
+      setTrackingId(null);
+    }, 300);
+  }}
+  disabled={trackingId === delivery._id}
+  className="mt-5 rounded-xl bg-blue-700 py-3"
+>
+  {trackingId === delivery._id ? (
+    <ActivityIndicator color="#ffffff" />
+  ) : (
+    <Text className="text-center font-bold text-white">
+      TRACK DELIVERY
+    </Text>
+  )}
+</Pressable>
                   </View>
                 );
               }
@@ -426,7 +433,7 @@ useEffect(() => {
 
         </View>
 
-      {/* ==================================== */}
+{/* ==================================== */}
 {/* RECENT DELIVERIES */}
 {/* ==================================== */}
 
@@ -446,7 +453,30 @@ useEffect(() => {
 
   </View>
 
-  {recentDeliveries.length === 0 ? (
+  {/* ==================================== */}
+  {/* LOADING */}
+  {/* ==================================== */}
+
+  {loading && deliveries.length === 0 ? (
+
+    <View className="mt-3 items-center rounded-2xl bg-white p-6">
+
+      <ActivityIndicator
+        size="small"
+        color="#1d4ed8"
+      />
+
+      <Text className="mt-3 text-sm text-slate-500">
+        Loading recent deliveries...
+      </Text>
+
+    </View>
+
+  ) : recentDeliveries.length === 0 ? (
+
+    /* ==================================== */
+    /* EMPTY */
+    /* ==================================== */
 
     <View className="mt-3 rounded-2xl bg-white p-5">
 
@@ -457,6 +487,10 @@ useEffect(() => {
     </View>
 
   ) : (
+
+    /* ==================================== */
+    /* DELIVERIES */
+    /* ==================================== */
 
     recentDeliveries
       .slice(0, 3)
@@ -469,12 +503,14 @@ useEffect(() => {
           <Pressable
             key={delivery._id}
             onPress={() =>
-              router.push(`/(customer)/create/${delivery._id}`)
+              router.push(
+                `/(customer)/create/${delivery._id}`
+              )
             }
             className="mt-3 rounded-2xl bg-white p-5"
           >
 
-            {/* Header */}
+            {/* HEADER */}
 
             <View className="flex-row items-start justify-between">
 
@@ -497,16 +533,14 @@ useEffect(() => {
                 <Text
                   className={`text-xs font-bold ${statusStyle.text}`}
                 >
-                  {getStatusLabel(
-                    delivery.status
-                  )}
+                  {getStatusLabel(delivery.status)}
                 </Text>
 
               </View>
 
             </View>
 
-            {/* Destination */}
+            {/* DESTINATION */}
 
             <View className="mt-4 border-t border-slate-100 pt-4">
 
@@ -520,7 +554,7 @@ useEffect(() => {
 
             </View>
 
-            {/* Information */}
+            {/* INFORMATION */}
 
             <View className="mt-4 flex-row justify-between">
 
@@ -542,11 +576,11 @@ useEffect(() => {
                   AMOUNT
                 </Text>
 
-                          </View>
+              </View>
 
             </View>
 
-            {/* View */}
+            {/* VIEW */}
 
             <View className="mt-4">
 
@@ -564,7 +598,9 @@ useEffect(() => {
 
 </View>
 
-      </ScrollView>
+
+
+      </View>
 
     </KeyboardAwareScrollView>
   );

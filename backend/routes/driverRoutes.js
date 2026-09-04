@@ -8,6 +8,8 @@ import {
   updateDriverAvailability,
   updateDriverStatus,
   getAllDrivers,
+  createDriverByAdmin,
+  updateDriverByAdmin,
 } from "../controllers/driverController.js";
 
 import {
@@ -21,23 +23,13 @@ const router = express.Router();
 // Driver - Get Own Profile
 // ========================================
 
-router.get(
-  "/profile",
-  protect,
-  authorize("driver"),
-  getDriverProfile
-);
+router.get("/profile", protect, authorize("driver"), getDriverProfile);
 
 // ========================================
 // Driver - Create Profile
 // ========================================
 
-router.post(
-  "/profile",
-  protect,
-  authorize("driver"),
-  createDriverProfile
-);
+router.post("/profile", protect, authorize("driver"), createDriverProfile);
 
 // ========================================
 // Driver - Update Profile
@@ -68,5 +60,18 @@ router.put("/status", protect, authorize("driver"), updateDriverStatus);
 // Admin - Get All Drivers
 // ========================================
 router.get("/admin", protect, authorize("admin"), getAllDrivers);
+
+// ========================================
+// Admin - Update Driver
+// ========================================
+
+router.put(  "/admin/:id",  protect,  authorize("admin"),  updateDriverByAdmin);
+
+router.post("/admin", protect, authorize("admin"), createDriverByAdmin);
+
+// ========================================
+// Admin - Update Driver
+// ========================================
+
 
 export default router;

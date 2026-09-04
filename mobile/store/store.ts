@@ -8,8 +8,23 @@ export const store = configureStore({
     auth: authReducer,
     deliveries: deliveryReducer,
   },
+
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Delivery routes contain large geometry coordinate arrays.
+        // Ignore them during Redux serializability checks.
+        ignoredPaths: [
+          "deliveries.deliveries",
+        ],
+        ignoredActions: [
+          "deliveries/getCustomerDeliveryById/fulfilled",
+          "deliveries/getDriverDeliveries/fulfilled",
+        ],
+      },
+    }),
 });
 
-export type RootState =  ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof store.getState>;
 
-export type AppDispatch =  typeof store.dispatch;
+export type AppDispatch = typeof store.dispatch;

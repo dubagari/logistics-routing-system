@@ -9,6 +9,8 @@ import {
 } from "react-native";
 
 import { useEffect, useState, useRef } from "react";
+import * as Location from "expo-location";
+
 import {
   useLocalSearchParams,
   useRouter,
@@ -31,6 +33,7 @@ import {
   selectDriverDeliveryRoute,
   startDriverDelivery,
   completeDriverDelivery,
+  updateDriverDeliveryLocation,
 } from "../../../store/slices/deliverySlice";
 
 
@@ -75,6 +78,105 @@ const {
       fetchDriverDeliveries(token)
     );
   }, [token, dispatch]);
+
+
+  // ============================================
+// DRIVER GPS TRACKING
+// ============================================
+
+useEffect(() => {
+  if (
+    !token ||
+    !delivery ||
+    delivery.status !== "in_transit"
+  ) {
+    return;
+  }
+
+  let locationSubscription: Location.LocationSubscription | null = null;
+
+  const startLocationTracking = async () => {
+    try {
+      // ----------------------------------------
+      // Request permission
+      // ----------------------------------------
+
+      const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
+      if (status !== Location.PermissionStatus.GRANTED) {
+        Alert.alert(
+          "Location Permission",
+          "Location permission is required to track the delivery."
+        );
+
+        return;
+      }
+
+      // ----------------------------------------
+      // Watch driver location
+      // ----------------------------------------
+
+      locationSubscription =
+        await Location.watchPositionAsync(
+          {
+            accuracy:
+              Location.Accuracy.High,
+            timeInterval: 5000,
+            distanceInterval: 10,
+          },
+
+          async (location) => {
+            const {
+              latitude,
+              longitude,
+            } = location.coords;
+
+            try {
+              await dispatch(
+                updateDriverDeliveryLocation({
+                  id: delivery._id,
+                  token,
+                  latitude,
+                  longitude,
+                })
+              ).unwrap();
+
+            } catch (error) {
+              console.error(
+                "GPS UPDATE ERROR:",
+                error
+              );
+            }
+          }
+        );
+
+    } catch (error) {
+      console.error(
+        "LOCATION TRACKING ERROR:",
+        error
+      );
+    }
+  };
+
+  startLocationTracking();
+
+  // ----------------------------------------
+  // Stop GPS tracking
+  // ----------------------------------------
+
+  return () => {
+    if (locationSubscription) {
+      locationSubscription.remove();
+    }
+  };
+
+}, [
+  token,
+  delivery?._id,
+  delivery?.status,
+  dispatch,
+]);
 
   // ============================================
   // ACCEPT DELIVERY

@@ -1,17 +1,16 @@
 {
-  "expo": {
-    "name": "StickerSmash",
+   "expo": {
+    "name": "Logistics Routing System",
     "slug": "StickerSmash",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "stickersmash",
+    "scheme": "logistics-routing-system",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.dubagari.logisticsrouting",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +43,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e2ce27b1-8dfb-4063-b1e2-b421a1f14367"
+      }
     }
   }
 }

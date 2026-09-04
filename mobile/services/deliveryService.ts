@@ -257,3 +257,26 @@ export const getCustomerDeliveryById = async (
   return response;
 };
 
+
+// ============================================
+// TRACK CUSTOMER DELIVERY
+// ============================================
+
+export const trackCustomerDelivery = async (
+  id: string,
+  token: string
+) => {
+  const response = await apiRequest(
+    `/deliveries/${id}/track`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response;
+};
+
+

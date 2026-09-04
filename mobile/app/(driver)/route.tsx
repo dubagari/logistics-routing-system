@@ -22,6 +22,7 @@ const DriverRoute = () => {
     (total, delivery) => total + delivery.estimatedTime,
     0
   );
+  
 
   const completedDeliveries = deliveries.filter(
     (delivery) => delivery.status === "delivered"
@@ -161,11 +162,11 @@ const DriverRoute = () => {
               {/* Customer */}
               <View className="ml-4 flex-1">
                 <Text className="font-bold text-slate-900">
-                  {item.customer.name}
+                  {typeof item.customer === "object" && item.customer ? item.customer.name || "Customer" : "Customer"}
                 </Text>
 
                 <Text className="mt-1 text-sm text-slate-500">
-                  {item.customer.phone}
+                  {typeof item.customer === "object" && item.customer ? item.customer.phone || "" : ""}
                 </Text>
               </View>
 
@@ -210,12 +211,7 @@ const DriverRoute = () => {
             onPress={() => {
               if (!nextDelivery) return;
 
-              router.push({
-                pathname: "/(driver)/delivery-details",
-                params: {
-                  id: nextDelivery._id,
-                },
-              });
+              router.push(`/(driver)/delivery/${nextDelivery._id}`);
             }}
             disabled={!nextDelivery}
             className={`mx-5 mt-2 rounded-xl py-4 ${

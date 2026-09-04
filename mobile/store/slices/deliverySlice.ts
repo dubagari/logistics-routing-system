@@ -21,6 +21,7 @@ import {
   createCustomerDelivery,
   getCustomerDeliveries,
   getCustomerDeliveryById,
+  trackCustomerDelivery,
   } from "../../services/deliveryService";
 
 // ============================================
@@ -410,6 +411,47 @@ export const fetchCustomerDeliveries =
     }
   );
 
+  // ============================================
+// TRACK CUSTOMER DELIVERY
+// ============================================
+
+export const trackCustomerDeliveryThunk =
+  createAsyncThunk<
+    any,
+    {
+      id: string;
+      token: string;
+    },
+    { rejectValue: string }
+  >(
+    "deliveries/trackCustomerDelivery",
+
+    async (
+      { id, token },
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await trackCustomerDelivery(
+            id,
+            token
+          );
+
+        console.log(
+          "TRACK DELIVERY:",
+          response
+        );
+
+        return response;
+
+      } catch (error: any) {
+        return rejectWithValue(
+          error.message ||
+            "Failed to track delivery"
+        );
+      }
+    }
+  );
 // ============================================
 // SLICE
 // ============================================
@@ -483,6 +525,47 @@ builder
     }
   );
 
+  builder
+  .addCase(
+    getCustomerDeliveryByIdThunk.pending,
+    (state) => {
+      state.loading = true;
+      state.error = null;
+    }
+  )
+
+  .addCase(
+    getCustomerDeliveryByIdThunk.fulfilled,
+    (state, action) => {
+      state.loading = false;
+
+      const index =
+        state.deliveries.findIndex(
+          (delivery) =>
+            delivery._id === action.payload._id
+        );
+
+      if (index !== -1) {
+        state.deliveries[index] =
+          action.payload;
+      } else {
+        state.deliveries.unshift(
+          action.payload
+        );
+      }
+    }
+  )
+
+  .addCase(
+    getCustomerDeliveryByIdThunk.rejected,
+    (state, action) => {
+      state.loading = false;
+
+      state.error =
+        action.payload ||
+        "Failed to get delivery";
+    }
+  );
     // ========================================
     // FETCH
     // ========================================
