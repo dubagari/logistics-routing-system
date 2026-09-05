@@ -231,32 +231,32 @@ const Drivers = () => {
   // Status Style
   // ========================================
 
-  const getStatusStyle = (
-    status?: string
-  ) => {
-    switch (status) {
-      case "active":
-        return "bg-emerald-50 text-emerald-700";
+  // const getStatusStyle = (
+  //   status?: string
+  // ) => {
+  //   switch (status) {
+  //     case "active":
+  //       return "bg-emerald-50 text-emerald-700";
 
-      case "inactive":
-        return "bg-slate-100 text-slate-600";
+  //     case "inactive":
+  //       return "bg-slate-100 text-slate-600";
 
-      case "suspended":
-        return "bg-red-50 text-red-700";
+  //     case "suspended":
+  //       return "bg-red-50 text-red-700";
 
-      case "available":
-        return "bg-emerald-50 text-emerald-700";
+  //     case "available":
+  //       return "bg-emerald-50 text-emerald-700";
 
-      case "on_delivery":
-        return "bg-blue-50 text-blue-700";
+  //     case "on_delivery":
+  //       return "bg-blue-50 text-blue-700";
 
-      case "offline":
-        return "bg-slate-100 text-slate-600";
+  //     case "offline":
+  //       return "bg-slate-100 text-slate-600";
 
-      default:
-        return "bg-slate-100 text-slate-600";
-    }
-  };
+  //     default:
+  //       return "bg-slate-100 text-slate-600";
+  //   }
+  // };
 
   return (
     <div className="space-y-6">
