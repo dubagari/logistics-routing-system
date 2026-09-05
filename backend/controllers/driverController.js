@@ -720,6 +720,13 @@ export const updateDriverByAdmin = async (
       });
     }
 
+    if (!driver.user) {
+  return res.status(400).json({
+    success: false,
+    message: "Driver account is missing",
+  });
+}
+
     // ----------------------------------------
     // Update User Information
     // ----------------------------------------
