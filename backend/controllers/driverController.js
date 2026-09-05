@@ -1,6 +1,7 @@
 import Driver from "../models/Driver.js";
 import Delivery from "../models/Delivery.js";
 import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 
 // ========================================
 // Create Driver Profile
@@ -897,14 +898,16 @@ export const createDriverByAdmin = async (req, res) => {
     }
 
     // Create user account
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      phone,
-      password,
-      role: "driver",
-      isActive: true,
-    });
+   const hashedPassword = await bcrypt.hash(password, 12);
+
+const user = await User.create({
+  name,
+  email: email.toLowerCase(),
+  phone,
+  password: hashedPassword,
+  role: "driver",
+  isActive: true,
+});
 
     // Create driver profile
     const driver = await Driver.create({
