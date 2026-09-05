@@ -1,7 +1,7 @@
 import { logout } from "@/store/slices/authSlice";
 import { store } from "@/store/store";
 
-const API_URL = "http://10.47.51.176:5000/api";
+const API_URL ="https://logistics-routing-system.onrender.com/api";
 
 export const apiRequest = async (
   endpoint: string,
