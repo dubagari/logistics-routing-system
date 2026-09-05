@@ -11,8 +11,9 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
+import { registerUser } from "@/services/authService";
 
-const API_URL = "http://10.47.51.176:5000/api";
+
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -22,75 +23,58 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (
-      !name.trim() ||
-      !email.trim() ||
-      !phone.trim() ||
-      !password
-    ) {
-      Alert.alert(
-        "Validation",
-        "Please fill in all fields."
-      );
-      return;
-    }
+  if (
+    !name.trim() ||
+    !email.trim() ||
+    !phone.trim() ||
+    !password
+  ) {
+    Alert.alert(
+      "Validation",
+      "Please fill in all fields."
+    );
+    return;
+  }
 
-    if (password.length < 6) {
-      Alert.alert(
-        "Invalid Password",
-        "Password must be at least 6 characters."
-      );
-      return;
-    }
+  if (password.length < 6) {
+    Alert.alert(
+      "Invalid Password",
+      "Password must be at least 6 characters."
+    );
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response = await fetch(
-        `${API_URL}/auth/register`,
+    await registerUser({
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      password,
+    });
+
+    Alert.alert(
+      "Registration Successful",
+      "Your account has been created. Please login.",
+      [
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim(),
-            phone: phone.trim(),
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Registration failed"
-        );
-      }
-
-      Alert.alert(
-        "Registration Successful",
-        "Your account has been created. Please login.",
-        [
-          {
-            text: "Login",
-            onPress: () => router.replace("/login"),
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert(
-        "Registration Failed",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+          text: "Login",
+          onPress: () => router.replace("/login"),
+        },
+      ]
+    );
+  } catch (error) {
+    Alert.alert(
+      "Registration Failed",
+      error instanceof Error
+        ? error.message
+        : "Something went wrong."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
    <KeyboardAvoidingView
