@@ -7,10 +7,7 @@ import {
   View,
 } from "react-native";
 
-import MapView, {
-  Marker,
-  Polyline,
-} from "react-native-maps";
+import OpenStreetMap from "@/components/OpenStreetMap";
 
 import {
   useLocalSearchParams,
@@ -18,7 +15,7 @@ import {
 } from "expo-router";
 
 import {
-  useEffect,useMemo,useRef,useState
+  useEffect,useMemo,useState
 } from "react";
 
 import {
@@ -37,8 +34,7 @@ const TrackDelivery = () => {
   const [initialLoading, setInitialLoading] =
     useState(true);
 
-  const mapRef =
-    useRef<MapView | null>(null);
+  // const mapRef =    useRef<MapView | null>(null);
   const { id } =
     useLocalSearchParams<{ id: string }>();
 
@@ -115,15 +111,18 @@ useEffect(() => {
 // ============================================
 
 const routeCoordinates = useMemo(() => {
+  const selectedRoute =
+    delivery?.routes?.find(
+      (route) =>
+        route.id === delivery?.selectedRoute
+    );
+
   const coordinates =
-    delivery?.routes?.[0]?.geometry?.coordinates;
+    selectedRoute?.geometry?.coordinates;
 
   if (!coordinates || coordinates.length === 0) {
     return [];
   }
-
-  // Backend/GeoJSON format:
-  // [longitude, latitude]
 
   return coordinates.map(
     ([longitude, latitude]) => ({
@@ -131,7 +130,10 @@ const routeCoordinates = useMemo(() => {
       longitude,
     })
   );
-}, [delivery?.routes]);
+}, [
+  delivery?.routes,
+  delivery?.selectedRoute,
+]);
 
 // ============================================
 // PICKUP
@@ -163,43 +165,6 @@ const driverCoordinate =
         longitude: delivery.currentLocation.longitude,
       }
     : null;
-
-useEffect(() => {
-  if (!mapRef.current) return;
-
-  if (driverCoordinate) {
-    mapRef.current.animateToRegion(
-      {
-        latitude: driverCoordinate.latitude,
-        longitude: driverCoordinate.longitude,
-        latitudeDelta: 0.08,
-        longitudeDelta: 0.08,
-      },
-      800
-    );
-
-    return;
-  }
-
-  if (routeCoordinates.length > 0) {
-    mapRef.current.fitToCoordinates(
-      routeCoordinates,
-      {
-        edgePadding: {
-          top: 50,
-          right: 50,
-          bottom: 50,
-          left: 50,
-        },
-        animated: true,
-      }
-    );
-  }
-}, [
-  driverCoordinate,
-  routeCoordinates,
-]);
-
 
 
 
@@ -335,106 +300,15 @@ if (isDelivered) {
 {/* ==================================== */}
 
 <View className="overflow-hidden rounded-2xl bg-white">
+  <OpenStreetMap
+    pickup={pickupCoordinate}
+    destination={destinationCoordinate}
+    driver={driverCoordinate}
+    routeCoordinates={routeCoordinates}
+    height={320}
+  />
 
-  <MapView
-    ref={mapRef}
-    style={{
-    width: "100%",
-    height: 320,
-  }}
-    initialRegion={{
-      latitude:
-        delivery.pickupLocation.latitude,
-      longitude:
-        delivery.pickupLocation.longitude,
-      latitudeDelta: 0.12,
-      longitudeDelta: 0.12,
-    }}
-    showsUserLocation={false}
-    showsMyLocationButton={false}
-    showsCompass={true}
-    loadingEnabled={true}
-  >
-
-    {/* ====================================== */}
-    {/* ROUTE */}
-    {/* ====================================== */}
-
-    {routeCoordinates.length > 0 && (
-      <Polyline
-        coordinates={routeCoordinates}
-        strokeWidth={5}
-      />
-    )}
-
-    {/* ====================================== */}
-    {/* PICKUP */}
-    {/* ====================================== */}
-
-    <Marker
-      coordinate={pickupCoordinate}
-      title="Pickup"
-      description={
-        delivery.pickupLocation.address
-      }
-    >
-      <View className="h-8 w-8 items-center justify-center rounded-full bg-green-600">
-        <Text className="text-base">
-          📦
-        </Text>
-      </View>
-    </Marker>
-
-    {/* ====================================== */}
-    {/* DESTINATION */}
-    {/* ====================================== */}
-
-    <Marker
-      coordinate={destinationCoordinate}
-      title="Destination"
-      description={
-        delivery.deliveryLocation.address
-      }
-    >
-      <View className="h-8 w-8 items-center justify-center rounded-full bg-red-600">
-        <Text className="text-base">
-          🏁
-        </Text>
-      </View>
-    </Marker>
-
-    {/* ====================================== */}
-    {/* DRIVER */}
-    {/* ====================================== */}
-
-    {driverCoordinate && (
-      <Marker
-        coordinate={driverCoordinate}
-        title="Driver"
-        description={
-          typeof delivery.driver === "object" &&
-          delivery.driver
-            ? delivery.driver.name
-            : "Your driver"
-        }
-        anchor={{
-          x: 0.5,
-          y: 0.5,
-        }}
-      >
-        <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-700">
-          <Text className="text-xl">
-            🚚
-          </Text>
-        </View>
-      </Marker>
-    )}
-
-  </MapView>
-
-  {/* ====================================== */}
   {/* MAP STATUS */}
-  {/* ====================================== */}
 
   <View className="absolute left-4 top-4 rounded-xl bg-white px-4 py-2 shadow">
 
@@ -451,7 +325,6 @@ if (isDelivered) {
     </Text>
 
   </View>
-
 </View>
 
         {/* ==================================== */}

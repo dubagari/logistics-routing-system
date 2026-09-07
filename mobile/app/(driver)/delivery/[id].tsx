@@ -8,7 +8,7 @@ import {
   Linking,
 } from "react-native";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import * as Location from "expo-location";
 
 import {
@@ -16,11 +16,11 @@ import {
   useRouter,
 } from "expo-router";
 
-import MapView, {
-  Marker,
-  Polyline,
-  PROVIDER_GOOGLE,
-} from "react-native-maps";
+// import MapView, {
+//   Marker,
+//   Polyline,
+//   PROVIDER_GOOGLE,
+// } from "react-native-maps";
 
 import {
   useAppSelector,
@@ -35,6 +35,7 @@ import {
   completeDriverDelivery,
   updateDriverDeliveryLocation,
 } from "../../../store/slices/deliverySlice";
+import OpenStreetMap from "@/components/OpenStreetMap";
 
 
 const DeliveryDetails = () => {
@@ -60,9 +61,9 @@ const {
     (item) => item._id === id
   );
 
-  const mapRef = useRef<MapView | null>(null);
+  // const mapRef = useRef<MapView | null>(null);
 
-  const [mapReady, setMapReady] = useState(false);
+  // const [mapReady, setMapReady] = useState(false);
 
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
 
@@ -357,13 +358,13 @@ const routeCoordinates =
   // MAP POSITION
   // ============================================
 
-  const mapLatitude =
-    currentLocation?.latitude ??
-    pickup.latitude;
+  // const mapLatitude =
+  //   currentLocation?.latitude ??
+  //   pickup.latitude;
 
-  const mapLongitude =
-    currentLocation?.longitude ??
-    pickup.longitude;
+  // const mapLongitude =
+  //   currentLocation?.longitude ??
+  //   pickup.longitude;
 
     
 
@@ -479,79 +480,29 @@ return (
     </View>
 
     {/* MAP */}
-    <View className="h-[30%]">
-
-
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={{ flex: 1 }}
-       initialRegion={{
-  latitude: mapLatitude,
-  longitude: mapLongitude,
-  latitudeDelta: 0.08,
-  longitudeDelta: 0.08,
-}}
-        onMapReady={() => setMapReady(true)}
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-        showsCompass
-        loadingEnabled
-      >
-
-        <Marker
-          coordinate={{
-            latitude: pickup.latitude,
-            longitude: pickup.longitude,
-          }}
-          title="Pickup"
-          description={pickup.address}
-        />
-
-        <Marker
-          coordinate={{
-            latitude: destination.latitude,
-            longitude: destination.longitude,
-          }}
-          title="Delivery Destination"
-          description={destination.address}
-        />
-
-        {currentLocation?.latitude != null &&
-          currentLocation?.longitude != null && (
-            <Marker
-              coordinate={{
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-              }}
-              title="Driver"
-              description="Current driver location"
-            />
-          )}
-
-        {routeCoordinates.length > 1 && (
-          <Polyline
-            coordinates={routeCoordinates}
-            strokeWidth={5}
-          />
-        )}
-
-      </MapView>
-
-      {!mapReady && (
-        <View className="absolute inset-0 items-center justify-center bg-white/70">
-          <ActivityIndicator
-            size="large"
-            color="#1d4ed8"
-          />
-
-          <Text className="mt-2 text-slate-600">
-            Loading map...
-          </Text>
-        </View>
-      )}
-
-    </View>
+<View className="h-[30%]">
+  <OpenStreetMap
+    pickup={{
+      latitude: pickup.latitude,
+      longitude: pickup.longitude,
+    }}
+    destination={{
+      latitude: destination.latitude,
+      longitude: destination.longitude,
+    }}
+    driver={
+      currentLocation?.latitude != null &&
+      currentLocation?.longitude != null
+        ? {
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+          }
+        : null
+    }
+    routeCoordinates={routeCoordinates}
+    style={{ flex: 1 }}
+  />
+</View>
 
     {/* DELIVERY DETAILS - SCROLLABLE */}
     <ScrollView
